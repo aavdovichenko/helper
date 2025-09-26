@@ -14,9 +14,9 @@ struct x86Simd
   }
 
   template<typename T>
-  static inline T* allocMemory(size_t count)
+  static inline T* allocMemory(size_t count, size_t alignment)
   {
-    return (T*)_mm_malloc(sizeof(T) * count, 16);
+    return (T*)_mm_malloc(sizeof(T) * count, alignment);
   }
 
   static inline void freeMemory(void* p)

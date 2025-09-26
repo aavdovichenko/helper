@@ -19,14 +19,14 @@ namespace Platform
 namespace Cpu
 {
 
-template <typename T> static inline bool havePopcntInstruction();
-template <typename T> static inline int popcnt(T word);
+template <typename T> inline bool havePopcntInstruction();
+template <typename T> inline int popcnt(T word);
 template <typename T> inline int leastSignificantSetBit(T word);
 template <typename T> inline int mostSignificantSetBit(T word);
 
 // implementation
 
-template <typename T> static inline bool havePopcntInstruction()
+template <typename T> inline bool havePopcntInstruction()
 {
 #ifdef PLATFORM_CPU_X86
 #ifdef PLATFORM_CPU_X86_32

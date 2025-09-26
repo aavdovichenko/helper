@@ -16,6 +16,8 @@ else {
   CONFIG(release, debug|release) : BUILD_TYPE = release
 }
 
+DESTDIR = $${BUILD_TYPE}
+
 INCLUDEPATH += include
 
 SOURCES += \

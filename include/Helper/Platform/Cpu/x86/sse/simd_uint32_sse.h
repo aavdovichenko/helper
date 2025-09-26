@@ -1,5 +1,7 @@
 #pragma once
 
+#include <immintrin.h> // for _mm_blend_epi32()
+
 #include "simd_int_sse.h"
 
 namespace Platform

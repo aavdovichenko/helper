@@ -69,6 +69,12 @@ struct AvxIntSimd : public x86Simd, public IntSimd<T, __m256i, __m256i>
 
   static bool isSupported();
 
+  template<typename T1>
+  static inline T1* allocMemory(size_t count)
+  {
+    return x86Simd::allocMemory<T1>(sizeof(T1) * count, 32);
+  }
+
   template<bool aligned> static inline Type load(const T* src);
   static inline Type load(const T* src);
   static inline void store(T* dst, ParamType value);

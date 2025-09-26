@@ -41,7 +41,7 @@ struct IntSimd
 template<typename T, typename SimdType, typename Implementation> template<int i0, int i1, int ...i, typename ...Args>
 inline Implementation& SimdIntType<T, SimdType, Implementation>::insert(T x0, T x1, Args... x)
 {
-  return insert<i0>(x0).insert<i1, i...>(x1, x...);
+  return insert<i0>(x0).template insert<i1, i...>(x1, x...);
 }
 
 }
