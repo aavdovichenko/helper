@@ -18,6 +18,9 @@ else {
 
 DESTDIR = $${BUILD_TYPE}
 
+win32-msvc* : QMAKE_CXXFLAGS += -WX
+linux-g++* : QMAKE_CXXFLAGS += -Werror
+
 INCLUDEPATH += include
 
 SOURCES += \
