@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef PLATFORM_COMPILER_GNU
+#include <cstddef> // for size_t
+#endif
 #include <cstdint>
 
 #include "../compiler.h"
