@@ -1,11 +1,12 @@
 #pragma once
 
+#include "../compiler.h"
+
 #ifdef PLATFORM_COMPILER_GNU
 #include <cstddef> // for size_t
 #endif
 #include <cstdint>
 
-#include "../compiler.h"
 #include "cpu.h"
 
 #if !defined(PLATFORM_COMPILER_MSVC) && !defined(PLATFORM_COMPILER_GNU)
