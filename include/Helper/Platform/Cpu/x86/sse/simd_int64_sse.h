@@ -2,6 +2,8 @@
 
 #include "simd_int_sse.h"
 
+#include <immintrin.h>
+
 namespace Platform
 {
 
