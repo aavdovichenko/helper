@@ -2,8 +2,6 @@
 
 #include "simd_int_sse.h"
 
-#include <immintrin.h>
-
 namespace Platform
 {
 
@@ -74,7 +72,7 @@ inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::revertedByteOrder() cons
 template<bool aligned>
 inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::loadLowWord(const int64_t* src)
 {
-  return SseSimdIntType<int64_t>::fromNativeType(aligned ? _mm_loadl_epi64((const __m128i*)src) : _mm_loadu_si64(src));
+  return SseSimdIntType<int64_t>::fromNativeType(aligned ? _mm_loadl_epi64((const __m128i*)src) : _mm_loadl_epi64((const __m128i*)src));
 }
 
 inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::loadLowWord(const int64_t* src)
