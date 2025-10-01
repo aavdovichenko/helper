@@ -2,6 +2,8 @@
 
 #include "simd_int_avx.h"
 
+#define PLATFORM_CPU_FEATURE_UINT64x4
+
 namespace Platform
 {
 

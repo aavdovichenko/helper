@@ -4,7 +4,8 @@
 
 #include "../simd_x86.h"
 
-#define SIMD_FLOAT8_SUPPORTED
+#define SIMD_FLOAT8_SUPPORTED // TODO : remove
+#define PLATFORM_CPU_FEATURE_FLOATx8
 
 #if SIMD_FLOAT_MAX_WIDTH < 8
 #undef SIMD_FLOAT_MAX_WIDTH

@@ -3,7 +3,8 @@
 #include "simd_int_avx.h"
 #include "../sse/simd_sse.h"
 
-#define SIMD_INT8_SUPPORTED
+#define SIMD_INT8_SUPPORTED // TODO : remove
+#define PLATFORM_CPU_FEATURE_INT32x8
 
 #if SIMD_INT_MAX_WIDTH < 8
 #undef SIMD_INT_MAX_WIDTH
