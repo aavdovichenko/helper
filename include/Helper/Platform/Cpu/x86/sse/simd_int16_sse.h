@@ -2,6 +2,8 @@
 
 #include "simd_int_sse.h"
 
+#define PLATFORM_CPU_FEATURE_INT16x8
+
 namespace Platform
 {
 
@@ -34,6 +36,7 @@ struct SseSimdIntType<int16_t> : public BaseSseSimdIntType<int16_t, SseSimdIntTy
   template<int n> inline SseSimdIntType<int16_t>& shiftWordsUp();
   template<int n> inline SseSimdIntType<int16_t>& shiftWordsDown();
 
+  static inline SseSimdIntType<int16_t> fromPackedUint8(uint64_t packed);
   inline void setFromPackedUint8(uint64_t packed);
 
   inline SseSimdIntType<int16_t> onesComplement() const;
@@ -74,8 +77,6 @@ struct SIMD<int16_t, 8> : public SseIntSimd<int16_t>
   static inline ExtendedType mulAdd(Type a, int16_t afactor, Type b, int16_t bfactor); // (int32)(a*afactor + b*bfactor)
   template <int16_t aFactor, int16_t bFactor>
   static inline ExtendedType mulAdd(ParamType a, ParamType b); // (int32)(a*aFactor + b*bFactor)
-
-  static inline Type fromPackedUint8(uint64_t packed);
 
   template<int dstStride = 1>
   static inline void transpose(Type* dst, Type w0, Type w1, Type w2, Type w3, Type w4, Type w5, Type w6, Type w7);
@@ -131,6 +132,11 @@ inline SseIntSimd<int16_t>::ConditionType SseSimdIntType<int16_t>::operator==(co
 inline SseIntSimd<int16_t>::ConditionType SseSimdIntType<int16_t>::operator<(const SseSimdIntType<int16_t>& other) const
 {
   return SseIntSimd<int16_t>::ConditionType{_mm_cmplt_epi16(value, other.value)};
+}
+
+inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::fromPackedUint8(uint64_t packed)
+{
+  return _mm_cvtepu8_epi16(_mm_set1_epi64x(packed));
 }
 
 inline void SseSimdIntType<int16_t>::setFromPackedUint8(uint64_t packed)
@@ -194,11 +200,6 @@ inline SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::populate(int value)
 inline int64_t SIMD<int16_t, 8>::conditionBitMask(ConditionParamType c0, ConditionParamType c1)
 {
   return _mm_movemask_epi8(_mm_packs_epi16(c0.value, c1.value));
-}
-
-inline SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::fromPackedUint8(uint64_t packed)
-{
-  return Type{_mm_cvtepu8_epi16(_mm_set1_epi64x(packed))};
 }
 
 template<int i>

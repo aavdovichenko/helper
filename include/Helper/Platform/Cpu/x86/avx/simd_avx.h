@@ -28,11 +28,7 @@ namespace Cpu
 {
 
 static inline bool isAVXEnabled();
-#if defined(PLATFORM_CPU_FEATURE_AVX2)
 static inline bool isAVX2Enabled();
-#else
-static inline constexpr bool isAVX2Enabled();
-#endif
 
 // implementation
 
@@ -41,17 +37,10 @@ static inline bool isAVXEnabled()
   return getx86CpuFeaturesWord(2) & (1 << 28);
 }
 
-#if defined(PLATFORM_CPU_FEATURE_AVX2)
 static inline bool isAVX2Enabled()
 {
   return getx86CpuExtendedFeaturesWord(1) & (1 << 5);
 }
-#else
-static inline constexpr bool isAVX2Enabled()
-{
-  return false;
-}
-#endif
 
 }
 

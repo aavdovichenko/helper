@@ -22,6 +22,12 @@ struct AvxSimdIntType<int32_t> : public BaseAvxSimdIntType<int32_t, AvxSimdIntTy
 {
   using BaseAvxSimdIntType<int32_t, AvxSimdIntType<int32_t>>::BaseAvxSimdIntType;
 
+  AvxSimdIntType<int32_t> operator+(const AvxSimdIntType<int32_t>& other) const;
+  AvxSimdIntType<int32_t> operator-(const AvxSimdIntType<int32_t>& other) const;
+
+  AvxSimdIntType<int32_t>& operator+=(const AvxSimdIntType<int32_t>& other);
+
+  static inline AvxSimdIntType<int32_t> fromPackedUint8(uint64_t packed);
   inline void setFromPackedUint8(uint64_t packed);
 };
 
@@ -67,11 +73,6 @@ struct SIMD<int32_t, 8> : public AvxIntSimd<int32_t>
     return Type{_mm256_blend_epi32(ab0246, _mm256_shuffle_epi32(ab1357, _MM_SHUFFLE(2, 3, 0, 1)), 0xaa)};
   }
 
-  static inline Type fromPackedUint8(uint64_t packed)
-  {
-    return Type{_mm256_cvtepu8_epi32(_mm_set1_epi64x(packed))};
-  }
-
   static inline Type interleaveEach2Low(__m256i a, __m256i b);
   static inline Type interleaveEach2High(__m256i a, __m256i b);
 
@@ -92,6 +93,27 @@ struct SIMD<int32_t, 8> : public AvxIntSimd<int32_t>
 };
 
 // implementation
+
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator+(const AvxSimdIntType<int32_t>& other) const
+{
+  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_add_epi32(value, other.value));
+}
+
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator-(const AvxSimdIntType<int32_t>& other) const
+{
+  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_sub_epi32(value, other.value));
+}
+
+inline AvxSimdIntType<int32_t>& AvxSimdIntType<int32_t>::operator+=(const AvxSimdIntType<int32_t>& other)
+{
+  value = _mm256_add_epi32(value, other.value);
+  return *this;
+}
+
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedUint8(uint64_t packed)
+{
+  return _mm256_cvtepu8_epi32(_mm_set1_epi64x(packed));
+}
 
 inline void AvxSimdIntType<int32_t>::setFromPackedUint8(uint64_t packed)
 {
@@ -216,21 +238,6 @@ inline void SIMD<int32_t, 8>::extractByteComponents(ParamType w0, ParamType w1, 
 
 namespace int32
 {
-
-static inline SIMD<int32_t, 8>::Type operator+(SIMD<int32_t, 8>::Type a, SIMD<int32_t, 8>::Type b)
-{
-  return SIMD<int32_t, 8>::Type{_mm256_add_epi32(a, b)};
-}
-
-static inline SIMD<int32_t, 8>::Type operator+=(SIMD<int32_t, 8>::Type& a, SIMD<int32_t, 8>::Type b)
-{
-  return a = SIMD<int32_t, 8>::Type{_mm256_add_epi32(a, b)};
-}
-
-static inline SIMD<int32_t, 8>::Type operator-(SIMD<int32_t, 8>::Type a, SIMD<int32_t, 8>::Type b)
-{
-  return SIMD<int32_t, 8>::Type{_mm256_sub_epi32(a, b)};
-}
 
 static inline SIMD<int32_t, 8>::Type operator<<(SIMD<int32_t, 8>::Type a, int count)
 {

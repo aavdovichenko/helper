@@ -6,7 +6,8 @@
 
 #include "../simd_x86.h"
 
-#define SIMD_INT4_SUPPORTED
+#define SIMD_INT4_SUPPORTED // TODO: remove
+#define PLATFORM_CPU_FEATURE_INT32x4
 
 #if SIMD_INT_MAX_WIDTH < 4
 #undef SIMD_INT_MAX_WIDTH
@@ -24,10 +25,18 @@ struct SseSimdIntType<int32_t> : public BaseSseSimdIntType<int32_t, SseSimdIntTy
 {
   using BaseSseSimdIntType<int32_t, SseSimdIntType<int32_t>>::BaseSseSimdIntType;
 
+  SseSimdIntType<int32_t> operator+(const SseSimdIntType<int32_t>& other) const;
+  SseSimdIntType<int32_t> operator-(const SseSimdIntType<int32_t>& other) const;
+
+  SseSimdIntType<int32_t>& operator+=(const SseSimdIntType<int32_t>& other);
+
   template<int i0, int i1, int i2, int i3> 
   inline SseSimdIntType<int32_t> shuffled() const;
   template<int i0, int i1, int i2, int i3>
   static inline SseSimdIntType<int32_t> shuffle(__m128i a, __m128i b);
+
+  static inline SseSimdIntType<int32_t> fromPackedUint8(uint32_t packed);
+  inline void setFromPackedUint8(uint32_t packed);
 };
 
 template<>
@@ -45,15 +54,34 @@ struct SIMD<int32_t, 4> : public SseIntSimd<int32_t>
   static inline Type mulSign(Type a, Type sign);
   static inline Type mulExtended(Type a, Type b, Type& abhi);
 
+  template<int dstStride = 1>
+  static inline void transpose(Type* dst, Type w0, Type w1, Type w2, Type w3);
   template<bool aligned, int dstStride = 1, int srcStride = 1>
-  static inline void transpose(Type* dst, const int* src);
+  static inline void transpose(Type* dst, const int32_t* src);
 
+  static void extractByteComponents(ParamType a, uint32_t& c0, uint32_t& c1, uint32_t& c2, uint32_t& c3);
   static void extractByteComponents(ParamType a, ParamType b, uint64_t& c0, uint64_t& c1, uint64_t& c2, uint64_t& c3);
 
   static inline Type interleaveLow16Bit(Type a, Type b);
 };
 
 // implementation
+
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::operator+(const SseSimdIntType<int32_t>& other) const
+{
+  return SseSimdIntType<int32_t>::fromNativeType(_mm_add_epi32(value, other.value));
+}
+
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::operator-(const SseSimdIntType<int32_t>& other) const
+{
+  return SseSimdIntType<int32_t>::fromNativeType(_mm_sub_epi32(value, other.value));
+}
+
+inline SseSimdIntType<int32_t>& SseSimdIntType<int32_t>::operator+=(const SseSimdIntType<int32_t>& other)
+{
+  value = _mm_add_epi32(value, other.value);
+  return *this;
+}
 
 template<int i0, int i1, int i2, int i3>
 inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::shuffled() const
@@ -72,6 +100,16 @@ inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::shuffle(__m128i a, __m12
   if (i0 == 2 && i1 == 6 && i2 == 3 && i3 == 7)
     return SseSimdIntType<int32_t>{_mm_unpackhi_epi32(a, b)};
   // TODO: implement more
+}
+
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedUint8(uint32_t packed)
+{
+  return _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
+}
+
+inline void SseSimdIntType<int32_t>::setFromPackedUint8(uint32_t packed)
+{
+  value = _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
 }
 
 inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::populate(int32_t value)
@@ -119,16 +157,36 @@ inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::mulExtended(Type a, Type b, Type
   return Type{_mm_blend_epi32(ab02, _mm_shuffle_epi32(ab13, _MM_SHUFFLE(2, 3, 0, 1)), 0xaa)};
 }
 
-template<bool aligned, int dstStride, int srcStride>
-inline void SIMD<int32_t, 4>::transpose(Type* dst, const int* src)
+template<int dstStride>
+inline void SIMD<int32_t, 4>::transpose(Type* dst, Type w0, Type w1, Type w2, Type w3)
 {
-  __m128 v0 = _mm_cvtepi32_ps(load<aligned>(src + 0 * 4 * srcStride)), v1 = _mm_cvtepi32_ps(load<aligned>(src + 1 * 4 * srcStride));
-  __m128 v2 = _mm_cvtepi32_ps(load<aligned>(src + 2 * 4 * srcStride)), v3 = _mm_cvtepi32_ps(load<aligned>(src + 3 * 4 * srcStride));
+  __m128 v0 = _mm_cvtepi32_ps(w0), v1 = _mm_cvtepi32_ps(w1), v2 = _mm_cvtepi32_ps(w2), v3 = _mm_cvtepi32_ps(w3);
   _MM_TRANSPOSE4_PS(v0, v1, v2, v3);
   dst[0 * dstStride] = _mm_cvtps_epi32(v0);
   dst[1 * dstStride] = _mm_cvtps_epi32(v1);
   dst[2 * dstStride] = _mm_cvtps_epi32(v2);
   dst[3 * dstStride] = _mm_cvtps_epi32(v3);
+}
+
+template<bool aligned, int dstStride, int srcStride>
+inline void SIMD<int32_t, 4>::transpose(Type* dst, const int32_t* src)
+{
+  transpose<dstStride>(dst, load<aligned>(src + 0 * 4 * srcStride), load<aligned>(src + 1 * 4 * srcStride), load<aligned>(src + 2 * 4 * srcStride), load<aligned>(src + 3 * 4 * srcStride));
+}
+
+inline void SIMD<int32_t, 4>::extractByteComponents(ParamType a, uint32_t& c0, uint32_t& c1, uint32_t& c2, uint32_t& c3)
+{
+                                                             // 00 10 20 30 01 11 21 31 02 12 22 32 03 13 23 33
+  __m128i b = _mm_shuffle_epi32(a, _MM_SHUFFLE(3, 2, 3, 2)); // 02 12 22 32 03 13 23 33 ...
+
+  __m128i c = _mm_unpacklo_epi8(a, b);               // 00 02 10 12 20 22 30 32 01 03 11 13 21 23 31 33
+  b = _mm_shuffle_epi32(c, _MM_SHUFFLE(3, 2, 3, 2)); // 01 03 11 13 21 23 31 33 ...
+  c = _mm_unpacklo_epi8(c, b);                       // 00 01 02 03 10 11 12 13 20 21 22 23 30 31 32 33
+
+  c0 = _mm_extract_epi32(c, 0);
+  c1 = _mm_extract_epi32(c, 1);
+  c2 = _mm_extract_epi32(c, 2);
+  c3 = _mm_extract_epi32(c, 3);
 }
 
 inline void SIMD<int32_t, 4>::extractByteComponents(ParamType w0, ParamType w1, uint64_t& c0, uint64_t& c1, uint64_t& c2, uint64_t& c3)
@@ -160,36 +218,6 @@ inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::interleaveLow16Bit(Type a, Type 
 
 namespace int32
 {
-
-static inline SIMD<int32_t, 4>::Type operator~(SIMD<int32_t, 4>::Type a)
-{
-  return SIMD<int32_t, 4>::Type{_mm_castps_si128(_mm_xor_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(_mm_set1_epi32(0xffffffff))))};
-}
-
-static inline SIMD<int32_t, 4>::Type operator&(SIMD<int32_t, 4>::Type a, SIMD<int32_t, 4>::Type b)
-{
-  return SIMD<int32_t, 4>::Type{_mm_castps_si128(_mm_and_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b)))};
-}
-
-static inline SIMD<int32_t, 4>::Type operator|(SIMD<int32_t, 4>::Type a, SIMD<int32_t, 4>::Type b)
-{
-  return SIMD<int32_t, 4>::Type{_mm_castps_si128(_mm_or_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b)))};
-}
-
-static inline SIMD<int32_t, 4>::Type operator+(SIMD<int32_t, 4>::Type a, SIMD<int32_t, 4>::Type b)
-{
-  return SIMD<int32_t, 4>::Type{_mm_add_epi32(a, b)};
-}
-
-static inline SIMD<int32_t, 4>::Type operator+=(SIMD<int32_t, 4>::Type& a, SIMD<int32_t, 4>::Type b)
-{
-  return a = SIMD<int32_t, 4>::Type{_mm_add_epi32(a, b)};
-}
-
-static inline SIMD<int32_t, 4>::Type operator-(SIMD<int32_t, 4>::Type a, SIMD<int32_t, 4>::Type b)
-{
-  return SIMD<int32_t, 4>::Type{_mm_sub_epi32(a, b)};
-}
 
 #ifndef PLATFORM_CPU_FEATURE_NO_SSE41
 static inline SIMD<int32_t, 4>::Type operator*(SIMD<int32_t, 4>::Type a, SIMD<int32_t, 4>::Type b)

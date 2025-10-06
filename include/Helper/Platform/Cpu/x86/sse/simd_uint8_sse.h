@@ -2,6 +2,8 @@
 
 #include "simd_int_sse.h"
 
+#define PLATFORM_CPU_FEATURE_UINT8x16
+
 namespace Platform
 {
 

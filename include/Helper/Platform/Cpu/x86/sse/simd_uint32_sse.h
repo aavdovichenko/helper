@@ -4,6 +4,8 @@
 
 #include "simd_int_sse.h"
 
+#define PLATFORM_CPU_FEATURE_INT32x4
+
 namespace Platform
 {
 
