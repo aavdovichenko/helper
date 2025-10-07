@@ -6,6 +6,10 @@
 
 // x86 AVX simd functions
 
+#if defined(PLATFORM_COMPILER_MSVC) || defined(__AVX__)
+#define PLATFORM_CPU_FEATURE_AVX
+#endif
+
 #if defined(PLATFORM_COMPILER_MSVC) || defined(__AVX2__)
 #define PLATFORM_CPU_FEATURE_AVX2
 #endif
@@ -19,7 +23,9 @@
 #include "simd_uint32_avx.h"
 #include "simd_uint64_avx.h"
 #endif
+#if defined(PLATFORM_CPU_FEATURE_AVX)
 #include "simd_float_avx.h"
+#endif
 
 namespace Platform
 {
