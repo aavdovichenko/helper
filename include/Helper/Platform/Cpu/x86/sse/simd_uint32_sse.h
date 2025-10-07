@@ -39,7 +39,7 @@ inline SseSimdIntType<uint32_t> SseSimdIntType<uint32_t>::operator+(const SseSim
 
 inline SseSimdIntType<uint32_t> SseSimdIntType<uint32_t>::operator>>(int count) const
 {
-  return SseSimdIntType<uint32_t>::SseSimdIntType(_mm_srli_epi32(value, count));
+  return SseSimdIntType<uint32_t>::fromNativeType(_mm_srli_epi32(value, count));
 }
 
 inline SIMD<uint32_t, 4>::Type SIMD<uint32_t, 4>::populate(uint32_t value)
