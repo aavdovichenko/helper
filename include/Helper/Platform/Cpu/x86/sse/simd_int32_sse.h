@@ -35,8 +35,10 @@ struct SseSimdIntType<int32_t> : public BaseSseSimdIntType<int32_t, SseSimdIntTy
   template<int i0, int i1, int i2, int i3>
   static inline SseSimdIntType<int32_t> shuffle(__m128i a, __m128i b);
 
+#ifdef PLATFORM_CPU_FEATURE_SSE41
   static inline SseSimdIntType<int32_t> fromPackedUint8(uint32_t packed);
   inline void setFromPackedUint8(uint32_t packed);
+#endif
 };
 
 template<>
@@ -102,6 +104,7 @@ inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::shuffle(__m128i a, __m12
   // TODO: implement more
 }
 
+#ifdef PLATFORM_CPU_FEATURE_SSE41
 inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedUint8(uint32_t packed)
 {
   return _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
@@ -111,6 +114,7 @@ inline void SseSimdIntType<int32_t>::setFromPackedUint8(uint32_t packed)
 {
   value = _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
 }
+#endif
 
 inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::populate(int32_t value)
 {
@@ -219,7 +223,7 @@ inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::interleaveLow16Bit(Type a, Type 
 namespace int32
 {
 
-#ifndef PLATFORM_CPU_FEATURE_NO_SSE41
+#ifdef PLATFORM_CPU_FEATURE_SSE41
 static inline SIMD<int32_t, 4>::Type operator*(SIMD<int32_t, 4>::Type a, SIMD<int32_t, 4>::Type b)
 {
   return SIMD<int32_t, 4>::Type{_mm_mullo_epi32(a, b)};

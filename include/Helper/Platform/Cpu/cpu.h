@@ -94,6 +94,12 @@ constexpr ByteOrder byteOrder = LittleEndian;
 constexpr int wordBits = (family == Family::x86_64 || family == Family::Arm64 || family == Family::Mips64) ? 64 : 32;
 
 #if defined(PLATFORM_CPU_X86)
+#  if defined(PLATFORM_COMPILER_MSVC) || defined(__SSE3__)
+#    define PLATFORM_CPU_FEATURE_SSE3
+#  endif
+#  if defined(PLATFORM_COMPILER_MSVC) || defined(__SSSE3__)
+#    define PLATFORM_CPU_FEATURE_SSSE3
+#  endif
 #  if defined(PLATFORM_COMPILER_MSVC) || defined(__SSE4_1__)
 #    define PLATFORM_CPU_FEATURE_SSE41
 #  endif

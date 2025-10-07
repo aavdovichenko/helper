@@ -29,6 +29,8 @@ namespace Cpu
 {
 
 static inline bool isSSE3Enabled();
+static inline bool isSSSE3Enabled();
+static inline bool isSSE41Enabled();
 
 template<typename FloatType> static inline constexpr int floatsPerSimdSSE();
 
@@ -40,6 +42,16 @@ template<typename FloatType> static inline FloatType mulZeroPaddedVectorsSSE3(co
 static inline bool isSSE3Enabled()
 {
   return getx86CpuFeaturesWord(2) & (1 << 0);
+}
+
+static inline bool isSSSE3Enabled()
+{
+  return getx86CpuFeaturesWord(2) & (1 << 9);
+}
+
+static inline bool isSSE41Enabled()
+{
+  return getx86CpuFeaturesWord(2) & (1 << 19);
 }
 
 template<typename FloatType> static inline constexpr int floatsPerSimdSSE()
