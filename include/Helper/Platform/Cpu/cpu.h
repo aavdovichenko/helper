@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../compiler.h"
+
 namespace Platform
 {
 
@@ -90,6 +92,18 @@ constexpr ByteOrder byteOrder = LittleEndian;
 #endif
 
 constexpr int wordBits = (family == Family::x86_64 || family == Family::Arm64 || family == Family::Mips64) ? 64 : 32;
+
+#if defined(PLATFORM_CPU_X86)
+#  if defined(PLATFORM_COMPILER_MSVC) || defined(__SSE4_1__)
+#    define PLATFORM_CPU_FEATURE_SSE41
+#  endif
+#  if defined(PLATFORM_COMPILER_MSVC) || defined(__AVX__)
+#    define PLATFORM_CPU_FEATURE_AVX
+#  endif
+#  if defined(PLATFORM_COMPILER_MSVC) || defined(__AVX2__)
+#    define PLATFORM_CPU_FEATURE_AVX2
+#  endif
+#endif
 
 }
 

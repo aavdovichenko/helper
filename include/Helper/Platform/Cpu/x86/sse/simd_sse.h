@@ -2,6 +2,7 @@
 
 #include <pmmintrin.h> // sse/sse2/sse3
 
+#include "../../cpu.h"
 #include "../x86.h"
 
 #include "simd_int8_sse.h"

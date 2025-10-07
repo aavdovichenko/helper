@@ -1,7 +1,6 @@
 #pragma once
 
-
-#ifdef PLATFORM_CPU_FEATURE_NO_SSE41
+#ifndef PLATFORM_CPU_FEATURE_SSE41
 #  include "../emulated/rounding_emulated.h"
 #else
 #  include <smmintrin.h>

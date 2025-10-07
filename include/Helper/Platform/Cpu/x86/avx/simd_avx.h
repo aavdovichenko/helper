@@ -2,17 +2,10 @@
 
 #include <immintrin.h>
 
+#include "../../cpu.h"
 #include "../x86.h"
 
 // x86 AVX simd functions
-
-#if defined(PLATFORM_COMPILER_MSVC) || defined(__AVX__)
-#define PLATFORM_CPU_FEATURE_AVX
-#endif
-
-#if defined(PLATFORM_COMPILER_MSVC) || defined(__AVX2__)
-#define PLATFORM_CPU_FEATURE_AVX2
-#endif
 
 #if defined(PLATFORM_CPU_FEATURE_AVX2)
 #include "simd_int8_avx.h"
