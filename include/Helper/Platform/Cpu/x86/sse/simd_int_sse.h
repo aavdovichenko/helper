@@ -12,6 +12,7 @@ namespace Platform
 namespace Cpu
 {
 
+static inline bool isSSSE3Enabled();
 static inline bool isSSE41Enabled();
 
 template <typename T> struct SseSimdIntType;
