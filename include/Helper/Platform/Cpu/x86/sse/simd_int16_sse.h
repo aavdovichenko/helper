@@ -36,10 +36,8 @@ struct SseSimdIntType<int16_t> : public BaseSseSimdIntType<int16_t, SseSimdIntTy
   template<int n> inline SseSimdIntType<int16_t>& shiftWordsUp();
   template<int n> inline SseSimdIntType<int16_t>& shiftWordsDown();
 
-#ifdef PLATFORM_CPU_FEATURE_SSE41
   static inline SseSimdIntType<int16_t> fromPackedUint8(uint64_t packed);
   inline void setFromPackedUint8(uint64_t packed);
-#endif
 
   inline SseSimdIntType<int16_t> onesComplement() const;
 };
@@ -68,10 +66,8 @@ struct SIMD<int16_t, 8> : public SseIntSimd<int16_t>
   template<int i>
   static inline Type insert(Type a, int16_t x);
 
-#ifdef PLATFORM_CPU_FEATURE_SSSE3
   static inline Type abs(Type a);
   static inline Type mulSign(Type a, Type sign);
-#endif
   static inline Type mulFixedPoint(Type a, Type b);
 
   static inline ExtendedType extend(ParamType value); // (int32)(value)
@@ -138,17 +134,17 @@ inline SseIntSimd<int16_t>::ConditionType SseSimdIntType<int16_t>::operator<(con
   return SseIntSimd<int16_t>::ConditionType{_mm_cmplt_epi16(value, other.value)};
 }
 
-#ifdef PLATFORM_CPU_FEATURE_SSE41
 inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::fromPackedUint8(uint64_t packed)
 {
+  static_assert(Platform::Cpu::Feature::sse41, "SSE 4.1 CPU feature required");
   return _mm_cvtepu8_epi16(_mm_set1_epi64x(packed));
 }
 
 inline void SseSimdIntType<int16_t>::setFromPackedUint8(uint64_t packed)
 {
+  static_assert(Platform::Cpu::Feature::sse41, "SSE 4.1 CPU feature required");
   value = _mm_cvtepu8_epi16(_mm_set1_epi64x(packed));
 }
-#endif
 
 inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::onesComplement() const
 {
@@ -214,17 +210,17 @@ inline SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::insert(Type a, int16_t x)
   return Type{_mm_insert_epi16(a, x, i)};
 }
 
-#ifdef PLATFORM_CPU_FEATURE_SSSE3
 inline SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::abs(Type a)
 {
+  static_assert(Platform::Cpu::Feature::ssse3, "SSSE3 CPU feature required");
   return Type{_mm_abs_epi16(a)};
 }
 
 inline SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::mulSign(Type a, Type sign)
 {
+  static_assert(Platform::Cpu::Feature::ssse3, "SSSE3 CPU feature required");
   return Type{_mm_sign_epi16(a, sign)};
 }
-#endif
 
 inline SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::mulFixedPoint(Type a, Type b)
 {

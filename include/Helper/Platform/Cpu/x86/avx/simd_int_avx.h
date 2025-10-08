@@ -67,7 +67,7 @@ struct AvxIntSimd : public x86Simd, public IntSimd<T, __m256i, __m256i>
   typedef ConditionType ConditionParamType;
 #endif
 
-  static bool isSupported();
+  static bool isSupported(SimdFeatures features = 0);
 
   template<typename T1>
   static inline T1* allocMemory(size_t count)
@@ -87,6 +87,8 @@ struct AvxIntSimd : public x86Simd, public IntSimd<T, __m256i, __m256i>
 };
 
 // implementation
+
+// AvxSimdIntType<T>
 
 template<typename T>
 inline AvxSimdIntType<T> AvxSimdIntConditionType<T>::mask() const
@@ -151,13 +153,15 @@ inline SseSimdIntType<T> BaseAvxSimdIntType<T, Implementation>::highPart() const
 template<typename T, typename Implementation>
 inline Implementation BaseAvxSimdIntType<T, Implementation>::operator&(const Implementation& other) const
 {
-  return Implementation::fromNativeType(_mm256_and_si256(this->value, other.value));
+//  return Implementation::fromNativeType(_mm256_and_si256(this->value, other.value));
+  return Implementation::fromNativeType(_mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(this->value), _mm256_castsi256_ps(other.value))));
 }
 
 template<typename T, typename Implementation>
 inline Implementation BaseAvxSimdIntType<T, Implementation>::operator|(const Implementation& other) const
 {
-  return Implementation::fromNativeType(_mm256_or_si256(this->value, other.value));
+//  return Implementation::fromNativeType(_mm256_or_si256(this->value, other.value));
+  return Implementation::fromNativeType(_mm256_castps_si256(_mm256_or_ps(_mm256_castsi256_ps(this->value), _mm256_castsi256_ps(other.value))));
 }
 
 template<typename T, typename Implementation>
@@ -185,12 +189,18 @@ inline Implementation BaseAvxSimdIntType<T, Implementation>::select(const AvxSim
   return Implementation::fromNativeType(_mm256_or_si256(_mm256_and_si256(condition, a), _mm256_andnot_si256(condition, b)));
 }
 
+// AvxIntSimd<T>
+
 template<typename T>
-inline bool AvxIntSimd<T>::isSupported()
+inline bool AvxIntSimd<T>::isSupported(SimdFeatures features)
 {
   static bool avxEnabled = isAVXEnabled();
   static bool avx2Enabled = isAVX2Enabled();
-  return avxEnabled && avx2Enabled; // AVX2 required
+
+  if ((features & (SimdFeature::InitFromUint8 | SimdFeature::Abs | SimdFeature::MulSign | SimdFeature::RevertByteOrder)) && !avx2Enabled)
+    return false;
+
+  return avxEnabled;
 }
 
 template<typename T> template<bool aligned>

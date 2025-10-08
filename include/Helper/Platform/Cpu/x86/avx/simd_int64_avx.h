@@ -68,6 +68,7 @@ inline AvxSimdIntType<int64_t> AvxSimdIntType<int64_t>::shuffle(__m256i a, __m25
 
 inline AvxSimdIntType<int64_t> AvxSimdIntType<int64_t>::revertedByteOrder() const
 {
+  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
   __m256i indices = _mm256_setr_epi8(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
   return _mm256_shuffle_epi8(value, indices);
 }

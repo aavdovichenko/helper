@@ -93,23 +93,41 @@ constexpr ByteOrder byteOrder = LittleEndian;
 
 constexpr int wordBits = (family == Family::x86_64 || family == Family::Arm64 || family == Family::Mips64) ? 64 : 32;
 
+namespace Feature
+{
 #if defined(PLATFORM_CPU_X86)
 #  if defined(PLATFORM_COMPILER_MSVC) || defined(__SSE3__)
 #    define PLATFORM_CPU_FEATURE_SSE3
+     constexpr bool sse3 = true;
+#  else
+     constexpr bool sse3 = false;
 #  endif
 #  if defined(PLATFORM_COMPILER_MSVC) || defined(__SSSE3__)
 #    define PLATFORM_CPU_FEATURE_SSSE3
+     constexpr bool ssse3 = true;
+#  else
+     constexpr bool ssse3 = false;
 #  endif
 #  if defined(PLATFORM_COMPILER_MSVC) || defined(__SSE4_1__)
 #    define PLATFORM_CPU_FEATURE_SSE41
+     constexpr bool sse41 = true;
+#  else
+     constexpr bool sse41 = false;
 #  endif
 #  if defined(PLATFORM_COMPILER_MSVC) || defined(__AVX__)
 #    define PLATFORM_CPU_FEATURE_AVX
+     constexpr bool avx = true;
+#  else
+     constexpr bool avx = false;
 #  endif
 #  if defined(PLATFORM_COMPILER_MSVC) || defined(__AVX2__)
 #    define PLATFORM_CPU_FEATURE_AVX2
+     constexpr bool avx2 = true;
+#  else
+     constexpr bool avx2 = false;
 #  endif
 #endif
+}
 
 }
 

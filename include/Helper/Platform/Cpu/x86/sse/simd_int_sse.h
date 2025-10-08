@@ -12,6 +12,8 @@ namespace Platform
 namespace Cpu
 {
 
+static inline bool isSSE41Enabled();
+
 template <typename T> struct SseSimdIntType;
 
 template <typename T>
@@ -58,10 +60,7 @@ struct SseIntSimd : public x86Simd, public IntSimd<T, __m128i, __m128i>
   typedef ConditionType ConditionParamType;
 #endif
 
-  static constexpr bool isSupported()
-  {
-    return true;
-  }
+  static bool isSupported(SimdFeatures features = 0);
 
   template<typename T1>
   static inline T1* allocMemory(size_t count)
@@ -77,6 +76,8 @@ struct SseIntSimd : public x86Simd, public IntSimd<T, __m128i, __m128i>
 };
 
 // implementation
+
+// SseSimdIntType<T>
 
 template<typename T>
 inline SseSimdIntType<T> SseSimdIntConditionType<T>::mask() const
@@ -155,6 +156,22 @@ template<typename T> template<bool aligned>
 inline typename SseIntSimd<T>::Type SseIntSimd<T>::load(const T* src)
 {
   return Type::fromNativeType(aligned ? _mm_load_si128((const __m128i*)src) : _mm_loadu_si128((const __m128i*)src));
+}
+
+//  SseIntSimd<T>
+
+template<typename T>
+bool SseIntSimd<T>::isSupported(SimdFeatures features)
+{
+  static bool ssse3Enabled = isSSSE3Enabled();
+  static bool sse41Enabled = isSSE41Enabled();
+
+  if ((features & SimdFeature::InitFromUint8) && !sse41Enabled)
+    return false;
+  if ((features & (SimdFeature::Abs | SimdFeature::MulSign | SimdFeature::RevertByteOrder)) && !ssse3Enabled)
+    return false;
+
+  return true;
 }
 
 template<typename T>

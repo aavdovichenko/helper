@@ -16,6 +16,17 @@ namespace Platform
 namespace Cpu
 {
 
+enum SimdFeature
+{
+  Multiplication  = 0x0001,
+  Abs             = 0x0010,
+  MulSign         = 0x0020,
+  InitFromUint8   = 0x0100,
+  RevertByteOrder = 0x1000,
+};
+
+typedef uint64_t SimdFeatures;
+
 struct GenericSimd
 {
   static constexpr bool isPointerAligned(const void*)
@@ -839,11 +850,11 @@ typedef typename SIMD<uint64_t, 4>::Type uint64x4_t;
 template<>
 struct SimdDetector<int8_t>
 {
-  static int maxSimdLength()
+  static int maxSimdLength(SimdFeatures features = 0)
   {
-    if (SIMD<int8_t, 32>::isSupported())
+    if (SIMD<int8_t, 32>::isSupported(features))
       return 32;
-    else if (SIMD<int8_t, 16>::isSupported())
+    else if (SIMD<int8_t, 16>::isSupported(features))
       return 16;
     return 1;
   }
@@ -852,11 +863,11 @@ struct SimdDetector<int8_t>
 template<>
 struct SimdDetector<int16_t>
 {
-  static int maxSimdLength()
+  static int maxSimdLength(SimdFeatures features = 0)
   {
-    if (SIMD<int16_t, 16>::isSupported())
+    if (SIMD<int16_t, 16>::isSupported(features))
       return 16;
-    else if (SIMD<int16_t, 8>::isSupported())
+    else if (SIMD<int16_t, 8>::isSupported(features))
       return 8;
     return 1;
   }
@@ -865,11 +876,11 @@ struct SimdDetector<int16_t>
 template<>
 struct SimdDetector<int32_t>
 {
-  static int maxSimdLength()
+  static int maxSimdLength(SimdFeatures features = 0)
   {
-    if (SIMD<int32_t, 8>::isSupported())
+    if (SIMD<int32_t, 8>::isSupported(features))
       return 8;
-    else if (SIMD<int32_t, 4>::isSupported())
+    else if (SIMD<int32_t, 4>::isSupported(features))
       return 4;
     return 1;
   }
@@ -878,11 +889,11 @@ struct SimdDetector<int32_t>
 template<>
 struct SimdDetector<int64_t>
 {
-  static int maxSimdLength()
+  static int maxSimdLength(SimdFeatures features = 0)
   {
-    if (SIMD<int64_t, 4>::isSupported())
+    if (SIMD<int64_t, 4>::isSupported(features))
       return 4;
-    else if (SIMD<int64_t, 2>::isSupported())
+    else if (SIMD<int64_t, 2>::isSupported(features))
       return 2;
     return 1;
   }

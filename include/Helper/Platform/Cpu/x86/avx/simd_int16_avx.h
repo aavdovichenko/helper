@@ -139,11 +139,13 @@ inline AvxSimdIntConditionType<int16_t> AvxSimdIntType<int16_t>::operator<(const
 
 inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::fromPackedInt8(SIMD<int8_t, 16>::ParamType packed)
 {
+  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
   return _mm256_cvtepi8_epi16(packed.value);
 }
 
 inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::fromPackedUint8(SIMD<uint8_t, 16>::ParamType packed)
 {
+  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
   return _mm256_cvtepu8_epi16(packed.value);
 }
 
@@ -164,11 +166,13 @@ inline typename SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::populate(int16_t valu
 
 inline SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::abs(ParamType a)
 {
+  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
   return Type{_mm256_abs_epi16(a.value)};
 }
 
 inline SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::mulSign(ParamType a, ParamType sign)
 {
+  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
   return Type{_mm256_sign_epi16(a.value, sign.value)};
 }
 
