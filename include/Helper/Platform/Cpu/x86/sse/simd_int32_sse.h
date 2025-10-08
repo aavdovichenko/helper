@@ -27,11 +27,7 @@ struct SseSimdIntType<int32_t> : public BaseSseSimdIntType<int32_t, SseSimdIntTy
 
   SseSimdIntType<int32_t> operator+(const SseSimdIntType<int32_t>& other) const;
   SseSimdIntType<int32_t> operator-(const SseSimdIntType<int32_t>& other) const;
-  SseSimdIntType<int32_t> operator*(const SseSimdIntType<int32_t>& other) const;
-  SseSimdIntType<int32_t> operator*(int32_t factor) const;
-
   SseSimdIntType<int32_t>& operator+=(const SseSimdIntType<int32_t>& other);
-  SseSimdIntType<int32_t>& operator*=(int32_t factor);
 
   SseSimdIntType<int32_t> operator>>(int count) const;
   SseSimdIntType<int32_t> operator<<(int count) const;
@@ -43,8 +39,14 @@ struct SseSimdIntType<int32_t> : public BaseSseSimdIntType<int32_t, SseSimdIntTy
   template<int i0, int i1, int i2, int i3>
   static inline SseSimdIntType<int32_t> shuffle(__m128i a, __m128i b);
 
+#ifdef PLATFORM_CPU_FEATURE_SSE41
+  SseSimdIntType<int32_t> operator*(const SseSimdIntType<int32_t>& other) const;
+  SseSimdIntType<int32_t> operator*(int32_t factor) const;
+  SseSimdIntType<int32_t>& operator*=(int32_t factor);
+
   static inline SseSimdIntType<int32_t> fromPackedUint8(uint32_t packed);
   inline void setFromPackedUint8(uint32_t packed);
+#endif
 };
 
 template<>
@@ -89,28 +91,9 @@ inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::operator-(const SseSimdI
   return SseSimdIntType<int32_t>::fromNativeType(_mm_sub_epi32(value, other.value));
 }
 
-inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::operator*(const SseSimdIntType<int32_t>& other) const
-{
-  static_assert(Platform::Cpu::Feature::sse41, "SSE 4.1 CPU feature required");
-  return SseSimdIntType<int32_t>::fromNativeType(_mm_mullo_epi32(value, other.value));
-}
-
-inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::operator*(int32_t factor) const
-{
-  static_assert(Platform::Cpu::Feature::sse41, "SSE 4.1 CPU feature required");
-  return SseSimdIntType<int32_t>::fromNativeType(_mm_mullo_epi32(value, _mm_set1_epi32(factor)));
-}
-
 inline SseSimdIntType<int32_t>& SseSimdIntType<int32_t>::operator+=(const SseSimdIntType<int32_t>& other)
 {
   value = _mm_add_epi32(value, other.value);
-  return *this;
-}
-
-inline SseSimdIntType<int32_t>& SseSimdIntType<int32_t>::operator*=(int32_t factor)
-{
-  static_assert(Platform::Cpu::Feature::sse41, "SSE 4.1 CPU feature required");
-  value = _mm_mullo_epi32(value, _mm_set1_epi32(factor));
   return *this;
 }
 
@@ -148,17 +131,33 @@ inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::shuffle(__m128i a, __m12
   // TODO: implement more
 }
 
+#ifdef PLATFORM_CPU_FEATURE_SSE41
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::operator*(const SseSimdIntType<int32_t>& other) const
+{
+  return SseSimdIntType<int32_t>::fromNativeType(_mm_mullo_epi32(value, other.value));
+}
+
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::operator*(int32_t factor) const
+{
+  return SseSimdIntType<int32_t>::fromNativeType(_mm_mullo_epi32(value, _mm_set1_epi32(factor)));
+}
+
+inline SseSimdIntType<int32_t>& SseSimdIntType<int32_t>::operator*=(int32_t factor)
+{
+  value = _mm_mullo_epi32(value, _mm_set1_epi32(factor));
+  return *this;
+}
+
 inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedUint8(uint32_t packed)
 {
-  static_assert(Platform::Cpu::Feature::sse41, "SSE 4.1 CPU feature required");
   return _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
 }
 
 inline void SseSimdIntType<int32_t>::setFromPackedUint8(uint32_t packed)
 {
-  static_assert(Platform::Cpu::Feature::sse41, "SSE 4.1 CPU feature required");
   value = _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
 }
+#endif
 
 // SIMD<int32_t, 4>
 

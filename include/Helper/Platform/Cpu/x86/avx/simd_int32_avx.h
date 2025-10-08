@@ -24,20 +24,22 @@ struct AvxSimdIntType<int32_t> : public BaseAvxSimdIntType<int32_t, AvxSimdIntTy
 
   AvxSimdIntType<int32_t> operator+(const AvxSimdIntType<int32_t>& other) const;
   AvxSimdIntType<int32_t> operator-(const AvxSimdIntType<int32_t>& other) const;
-  AvxSimdIntType<int32_t> operator*(const AvxSimdIntType<int32_t>& other) const;
-  AvxSimdIntType<int32_t> operator*(int32_t factor) const;
-  friend AvxSimdIntType<int32_t> operator*(int32_t factor, const AvxSimdIntType<int32_t>& value);
-
   AvxSimdIntType<int32_t>& operator+=(const AvxSimdIntType<int32_t>& other);
-  AvxSimdIntType<int32_t>& operator*=(int32_t factor);
 
   AvxSimdIntType<int32_t> operator>>(int count) const;
   AvxSimdIntType<int32_t> operator<<(int count) const;
 
   AvxIntSimd<int32_t>::ConditionType operator<(const AvxSimdIntType<int32_t>& other) const;
 
+#ifdef PLATFORM_CPU_FEATURE_AVX2
+  AvxSimdIntType<int32_t> operator*(const AvxSimdIntType<int32_t>& other) const;
+  AvxSimdIntType<int32_t> operator*(int32_t factor) const;
+  friend AvxSimdIntType<int32_t> operator*(int32_t factor, const AvxSimdIntType<int32_t>& value);
+  AvxSimdIntType<int32_t>& operator*=(int32_t factor);
+
   static inline AvxSimdIntType<int32_t> fromPackedUint8(uint64_t packed);
   inline void setFromPackedUint8(uint64_t packed);
+#endif
 };
 
 template<>
@@ -73,8 +75,10 @@ struct SIMD<int32_t, 8> : public AvxIntSimd<int32_t>
     return Type{_mm256_max_epi32(a, b)};
   }
 
+#ifdef PLATFORM_CPU_FEATURE_AVX2
   static inline Type abs(Type a);
   static inline Type mulSign(Type a, Type sign);
+#endif
 
   static inline Type mulExtended(Type a, Type b, Type& abhi)
   {
@@ -117,34 +121,9 @@ inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator-(const AvxSimdI
   return AvxSimdIntType<int32_t>::fromNativeType(_mm256_sub_epi32(value, other.value));
 }
 
-inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator*(const AvxSimdIntType<int32_t>& other) const
-{
-  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
-  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_mullo_epi32(value, other.value));
-}
-
-inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator*(int32_t factor) const
-{
-  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
-  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_mullo_epi32(value, _mm256_set1_epi32(factor)));
-}
-
-inline AvxSimdIntType<int32_t> operator*(int32_t factor, const AvxSimdIntType<int32_t>& value)
-{
-  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
-  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_mullo_epi32(value.value, _mm256_set1_epi32(factor)));
-}
-
 inline AvxSimdIntType<int32_t>& AvxSimdIntType<int32_t>::operator+=(const AvxSimdIntType<int32_t>& other)
 {
   value = _mm256_add_epi32(value, other.value);
-  return *this;
-}
-
-inline AvxSimdIntType<int32_t>& AvxSimdIntType<int32_t>::operator*=(int32_t factor)
-{
-  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
-  value = _mm256_mullo_epi32(value, _mm256_set1_epi32(factor));
   return *this;
 }
 
@@ -163,17 +142,38 @@ inline AvxIntSimd<int32_t>::ConditionType AvxSimdIntType<int32_t>::operator<(con
   return AvxIntSimd<int32_t>::ConditionType{_mm256_cmpgt_epi32(other.value, value)};
 }
 
+#ifdef PLATFORM_CPU_FEATURE_AVX2
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator*(const AvxSimdIntType<int32_t>& other) const
+{
+  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_mullo_epi32(value, other.value));
+}
+
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator*(int32_t factor) const
+{
+  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_mullo_epi32(value, _mm256_set1_epi32(factor)));
+}
+
+inline AvxSimdIntType<int32_t> operator*(int32_t factor, const AvxSimdIntType<int32_t>& value)
+{
+  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_mullo_epi32(value.value, _mm256_set1_epi32(factor)));
+}
+
+inline AvxSimdIntType<int32_t>& AvxSimdIntType<int32_t>::operator*=(int32_t factor)
+{
+  value = _mm256_mullo_epi32(value, _mm256_set1_epi32(factor));
+  return *this;
+}
+
 inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedUint8(uint64_t packed)
 {
-  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
   return _mm256_cvtepu8_epi32(_mm_set1_epi64x(packed));
 }
 
 inline void AvxSimdIntType<int32_t>::setFromPackedUint8(uint64_t packed)
 {
-  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
   value = _mm256_cvtepu8_epi32(_mm_set1_epi64x(packed));
 }
+#endif
 
 // SIMD<int32_t, 8>
 
@@ -186,17 +186,17 @@ inline bool SIMD<int32_t, 8>::isSupported(SimdFeatures features)
   return AvxIntSimd<int32_t>::isSupported(features);
 }
 
+#ifdef PLATFORM_CPU_FEATURE_AVX2
 inline SIMD<int32_t, 8>::Type SIMD<int32_t, 8>::abs(Type a)
 {
-  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
   return Type{_mm256_abs_epi32(a)};
 }
 
 inline SIMD<int32_t, 8>::Type SIMD<int32_t, 8>::mulSign(Type a, Type sign)
 {
-  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
   return Type{_mm256_sign_epi32(a, sign)};
 }
+#endif
 
 inline SIMD<int32_t, 8>::Type SIMD<int32_t, 8>::interleaveEach2Low(__m256i a, __m256i b)
 {

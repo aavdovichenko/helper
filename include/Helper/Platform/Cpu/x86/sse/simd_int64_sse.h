@@ -27,7 +27,9 @@ struct SseSimdIntType<int64_t> : public BaseSseSimdIntType<int64_t, SseSimdIntTy
   template <int i0, int i1>
   static inline SseSimdIntType<int64_t> shuffle(__m128i a, __m128i b);
 
+#ifdef PLATFORM_CPU_FEATURE_SSSE3
   inline SseSimdIntType<int64_t> revertedByteOrder() const;
+#endif
 };
 
 template<>
@@ -65,13 +67,6 @@ inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::shuffle(__m128i a, __m12
   return SseSimdIntType<int64_t>{_mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(i0 < 2 ? a : b), _mm_castsi128_pd(i1 < 2 ? a : b), imm8))};
 }
 
-inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::revertedByteOrder() const
-{
-  static_assert(Platform::Cpu::Feature::ssse3, "SSSE3 CPU feature required");
-  __m128i indices = _mm_setr_epi8(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
-  return _mm_shuffle_epi8(value, indices);
-}
-
 template<bool aligned>
 inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::loadLowWord(const int64_t* src)
 {
@@ -87,6 +82,14 @@ inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::loadLowWord(__m128i dst,
 {
   return SseSimdIntType<int64_t>::fromNativeType(_mm_castps_si128(_mm_loadl_pi(_mm_castsi128_ps(dst), (const __m64*)src)));
 }
+
+#ifdef PLATFORM_CPU_FEATURE_SSSE3
+inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::revertedByteOrder() const
+{
+  __m128i indices = _mm_setr_epi8(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
+  return _mm_shuffle_epi8(value, indices);
+}
+#endif
 
 }
 

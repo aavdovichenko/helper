@@ -22,9 +22,11 @@ struct AvxSimdIntType<int64_t> : public BaseAvxSimdIntType<int64_t, AvxSimdIntTy
   template<int i0, int i1, int i2, int i3>
   static inline AvxSimdIntType<int64_t> shuffle(__m256i a, __m256i b);
 
-  inline AvxSimdIntType<int64_t> revertedByteOrder() const;
-
   AvxSimdIntType<int64_t> operator<<(int count) const;
+
+#ifdef PLATFORM_CPU_FEATURE_AVX2
+  inline AvxSimdIntType<int64_t> revertedByteOrder() const;
+#endif
 };
 
 template<>
@@ -66,17 +68,18 @@ inline AvxSimdIntType<int64_t> AvxSimdIntType<int64_t>::shuffle(__m256i a, __m25
   return AvxSimdIntType<int64_t>();
 }
 
-inline AvxSimdIntType<int64_t> AvxSimdIntType<int64_t>::revertedByteOrder() const
-{
-  static_assert(Platform::Cpu::Feature::avx2, "AVX2 CPU feature required");
-  __m256i indices = _mm256_setr_epi8(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
-  return _mm256_shuffle_epi8(value, indices);
-}
-
 inline AvxSimdIntType<int64_t> AvxSimdIntType<int64_t>::operator<<(int count) const
 {
   return AvxSimdIntType<int64_t>::fromNativeType(_mm256_slli_epi64(value, count));
 }
+
+#ifdef PLATFORM_CPU_FEATURE_AVX2
+inline AvxSimdIntType<int64_t> AvxSimdIntType<int64_t>::revertedByteOrder() const
+{
+  __m256i indices = _mm256_setr_epi8(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
+  return _mm256_shuffle_epi8(value, indices);
+}
+#endif
 
 }
 
