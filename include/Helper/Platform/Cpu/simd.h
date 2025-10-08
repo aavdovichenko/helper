@@ -101,7 +101,7 @@ struct SIMD : public GenericSimd
     typename SIMD<ScalarType, width>::Type lo, hi;
   };
 
-  static inline constexpr bool isSupported();
+  static inline constexpr bool isSupported(SimdFeatures features);
 
   static inline Type zero();
 
@@ -152,7 +152,7 @@ struct SIMD<T, 1> : public GenericSimd
   typedef bool ConditionType;
   typedef typename GenericExtendedIntegerType<T>::Type ExtendedType;
 
-  static inline constexpr bool isSupported();
+  static inline constexpr bool isSupported(SimdFeatures features);
 
   static inline constexpr Type zero();
 
@@ -202,7 +202,7 @@ template<typename FloatType> static FloatType mulVectorsNoSimd(const FloatType* 
 // SIMD<T, width>
 
 template<typename T, int width>
-inline constexpr bool SIMD<T, width>::isSupported()
+inline constexpr bool SIMD<T, width>::isSupported(SimdFeatures)
 {
   return false;
 }
@@ -631,11 +631,10 @@ inline typename SIMD<T, width>::ConditionType SIMD<T, width>::Type::operator>=(c
 // SIMD<T, 1>
 
 template<typename T>
-inline constexpr bool SIMD<T, 1>::isSupported()
+inline constexpr bool SIMD<T, 1>::isSupported(SimdFeatures)
 {
   return true;
 }
-
 
 template<typename T>
 inline constexpr typename SIMD<T, 1>::Type SIMD<T, 1>::zero()
