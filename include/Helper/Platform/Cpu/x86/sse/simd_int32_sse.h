@@ -218,12 +218,12 @@ inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::mulExtended(Type a, Type b, Type
 template<int dstStride>
 inline void SIMD<int32_t, 4>::transpose(Type* dst, Type w0, Type w1, Type w2, Type w3)
 {
-  __m128 v0 = _mm_cvtepi32_ps(w0), v1 = _mm_cvtepi32_ps(w1), v2 = _mm_cvtepi32_ps(w2), v3 = _mm_cvtepi32_ps(w3);
+  __m128 v0 = _mm_castsi128_ps(w0), v1 = _mm_castsi128_ps(w1), v2 = _mm_castsi128_ps(w2), v3 = _mm_castsi128_ps(w3);
   _MM_TRANSPOSE4_PS(v0, v1, v2, v3);
-  dst[0 * dstStride] = _mm_cvtps_epi32(v0);
-  dst[1 * dstStride] = _mm_cvtps_epi32(v1);
-  dst[2 * dstStride] = _mm_cvtps_epi32(v2);
-  dst[3 * dstStride] = _mm_cvtps_epi32(v3);
+  dst[0 * dstStride] = _mm_castps_si128(v0);
+  dst[1 * dstStride] = _mm_castps_si128(v1);
+  dst[2 * dstStride] = _mm_castps_si128(v2);
+  dst[3 * dstStride] = _mm_castps_si128(v3);
 }
 
 template<bool aligned, int dstStride, int srcStride>
