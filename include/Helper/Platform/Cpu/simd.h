@@ -849,11 +849,11 @@ typedef typename SIMD<uint64_t, 4>::Type uint64x4_t;
 template<>
 struct SimdDetector<int8_t>
 {
-  static int maxSimdLength(SimdFeatures features = 0)
+  static int maxSimdLength(SimdFeatures features, int lengthLimit = 0x7fffffff)
   {
-    if (SIMD<int8_t, 32>::isSupported(features))
+    if (lengthLimit >= 32 && SIMD<int8_t, 32>::isSupported(features))
       return 32;
-    else if (SIMD<int8_t, 16>::isSupported(features))
+    else if (lengthLimit >= 16 && SIMD<int8_t, 16>::isSupported(features))
       return 16;
     return 1;
   }
@@ -862,11 +862,11 @@ struct SimdDetector<int8_t>
 template<>
 struct SimdDetector<int16_t>
 {
-  static int maxSimdLength(SimdFeatures features = 0)
+  static int maxSimdLength(SimdFeatures features, int lengthLimit = 0x7fffffff)
   {
-    if (SIMD<int16_t, 16>::isSupported(features))
+    if (lengthLimit >= 16 && SIMD<int16_t, 16>::isSupported(features))
       return 16;
-    else if (SIMD<int16_t, 8>::isSupported(features))
+    else if (lengthLimit >= 8 && SIMD<int16_t, 8>::isSupported(features))
       return 8;
     return 1;
   }
@@ -875,11 +875,11 @@ struct SimdDetector<int16_t>
 template<>
 struct SimdDetector<int32_t>
 {
-  static int maxSimdLength(SimdFeatures features = 0)
+  static int maxSimdLength(SimdFeatures features, int lengthLimit = 0x7fffffff)
   {
-    if (SIMD<int32_t, 8>::isSupported(features))
+    if (lengthLimit >= 8 && SIMD<int32_t, 8>::isSupported(features))
       return 8;
-    else if (SIMD<int32_t, 4>::isSupported(features))
+    else if (lengthLimit >= 4 && SIMD<int32_t, 4>::isSupported(features))
       return 4;
     return 1;
   }
@@ -888,11 +888,11 @@ struct SimdDetector<int32_t>
 template<>
 struct SimdDetector<int64_t>
 {
-  static int maxSimdLength(SimdFeatures features = 0)
+  static int maxSimdLength(SimdFeatures features, int lengthLimit = 0x7fffffff)
   {
-    if (SIMD<int64_t, 4>::isSupported(features))
+    if (lengthLimit >= 4 && SIMD<int64_t, 4>::isSupported(features))
       return 4;
-    else if (SIMD<int64_t, 2>::isSupported(features))
+    else if (lengthLimit >= 2 && SIMD<int64_t, 2>::isSupported(features))
       return 2;
     return 1;
   }
