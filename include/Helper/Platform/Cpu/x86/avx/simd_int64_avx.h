@@ -24,9 +24,7 @@ struct AvxSimdIntType<int64_t> : public BaseAvxSimdIntType<int64_t, AvxSimdIntTy
 
   AvxSimdIntType<int64_t> operator<<(int count) const;
 
-#ifdef PLATFORM_CPU_FEATURE_AVX2
   inline AvxSimdIntType<int64_t> revertedByteOrder() const;
-#endif
 };
 
 template<>
@@ -73,13 +71,11 @@ inline AvxSimdIntType<int64_t> AvxSimdIntType<int64_t>::operator<<(int count) co
   return AvxSimdIntType<int64_t>::fromNativeType(_mm256_slli_epi64(value, count));
 }
 
-#ifdef PLATFORM_CPU_FEATURE_AVX2
 inline AvxSimdIntType<int64_t> AvxSimdIntType<int64_t>::revertedByteOrder() const
 {
   __m256i indices = _mm256_setr_epi8(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
   return _mm256_shuffle_epi8(value, indices);
 }
-#endif
 
 }
 

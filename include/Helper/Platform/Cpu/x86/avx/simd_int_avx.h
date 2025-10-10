@@ -192,15 +192,12 @@ inline Implementation BaseAvxSimdIntType<T, Implementation>::select(const AvxSim
 // AvxIntSimd<T>
 
 template<typename T>
-inline bool AvxIntSimd<T>::isSupported(SimdFeatures features)
+inline bool AvxIntSimd<T>::isSupported(SimdFeatures)
 {
   static bool avxEnabled = isAVXEnabled();
   static bool avx2Enabled = isAVX2Enabled();
 
-  if ((features & (SimdFeature::InitFromUint8 | SimdFeature::Abs | SimdFeature::MulSign | SimdFeature::RevertByteOrder)) && !avx2Enabled)
-    return false;
-
-  return avxEnabled;
+  return avxEnabled && avx2Enabled;
 }
 
 template<typename T> template<bool aligned>

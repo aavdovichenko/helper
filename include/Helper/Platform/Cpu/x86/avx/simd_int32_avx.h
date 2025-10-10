@@ -26,20 +26,18 @@ struct AvxSimdIntType<int32_t> : public BaseAvxSimdIntType<int32_t, AvxSimdIntTy
   AvxSimdIntType<int32_t> operator-(const AvxSimdIntType<int32_t>& other) const;
   AvxSimdIntType<int32_t>& operator+=(const AvxSimdIntType<int32_t>& other);
 
-  AvxSimdIntType<int32_t> operator>>(int count) const;
-  AvxSimdIntType<int32_t> operator<<(int count) const;
-
-  AvxIntSimd<int32_t>::ConditionType operator<(const AvxSimdIntType<int32_t>& other) const;
-
-#ifdef PLATFORM_CPU_FEATURE_AVX2
   AvxSimdIntType<int32_t> operator*(const AvxSimdIntType<int32_t>& other) const;
   AvxSimdIntType<int32_t> operator*(int32_t factor) const;
   friend AvxSimdIntType<int32_t> operator*(int32_t factor, const AvxSimdIntType<int32_t>& value);
   AvxSimdIntType<int32_t>& operator*=(int32_t factor);
 
+  AvxSimdIntType<int32_t> operator>>(int count) const;
+  AvxSimdIntType<int32_t> operator<<(int count) const;
+
+  AvxIntSimd<int32_t>::ConditionType operator<(const AvxSimdIntType<int32_t>& other) const;
+
   static inline AvxSimdIntType<int32_t> fromPackedUint8(uint64_t packed);
   inline void setFromPackedUint8(uint64_t packed);
-#endif
 };
 
 template<>
@@ -75,10 +73,8 @@ struct SIMD<int32_t, 8> : public AvxIntSimd<int32_t>
     return Type{_mm256_max_epi32(a, b)};
   }
 
-#ifdef PLATFORM_CPU_FEATURE_AVX2
   static inline Type abs(Type a);
   static inline Type mulSign(Type a, Type sign);
-#endif
 
   static inline Type mulExtended(Type a, Type b, Type& abhi)
   {
@@ -127,22 +123,6 @@ inline AvxSimdIntType<int32_t>& AvxSimdIntType<int32_t>::operator+=(const AvxSim
   return *this;
 }
 
-inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator>>(int count) const
-{
-  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_srai_epi32(value, count));
-}
-
-inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator<<(int count) const
-{
-  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_slli_epi32(value, count));
-}
-
-inline AvxIntSimd<int32_t>::ConditionType AvxSimdIntType<int32_t>::operator<(const AvxSimdIntType<int32_t>& other) const
-{
-  return AvxIntSimd<int32_t>::ConditionType{_mm256_cmpgt_epi32(other.value, value)};
-}
-
-#ifdef PLATFORM_CPU_FEATURE_AVX2
 inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator*(const AvxSimdIntType<int32_t>& other) const
 {
   return AvxSimdIntType<int32_t>::fromNativeType(_mm256_mullo_epi32(value, other.value));
@@ -164,6 +144,21 @@ inline AvxSimdIntType<int32_t>& AvxSimdIntType<int32_t>::operator*=(int32_t fact
   return *this;
 }
 
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator>>(int count) const
+{
+  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_srai_epi32(value, count));
+}
+
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::operator<<(int count) const
+{
+  return AvxSimdIntType<int32_t>::fromNativeType(_mm256_slli_epi32(value, count));
+}
+
+inline AvxIntSimd<int32_t>::ConditionType AvxSimdIntType<int32_t>::operator<(const AvxSimdIntType<int32_t>& other) const
+{
+  return AvxIntSimd<int32_t>::ConditionType{_mm256_cmpgt_epi32(other.value, value)};
+}
+
 inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedUint8(uint64_t packed)
 {
   return _mm256_cvtepu8_epi32(_mm_set1_epi64x(packed));
@@ -173,7 +168,6 @@ inline void AvxSimdIntType<int32_t>::setFromPackedUint8(uint64_t packed)
 {
   value = _mm256_cvtepu8_epi32(_mm_set1_epi64x(packed));
 }
-#endif
 
 // SIMD<int32_t, 8>
 
@@ -186,7 +180,6 @@ inline bool SIMD<int32_t, 8>::isSupported(SimdFeatures features)
   return AvxIntSimd<int32_t>::isSupported(features);
 }
 
-#ifdef PLATFORM_CPU_FEATURE_AVX2
 inline SIMD<int32_t, 8>::Type SIMD<int32_t, 8>::abs(Type a)
 {
   return Type{_mm256_abs_epi32(a)};
@@ -196,7 +189,6 @@ inline SIMD<int32_t, 8>::Type SIMD<int32_t, 8>::mulSign(Type a, Type sign)
 {
   return Type{_mm256_sign_epi32(a, sign)};
 }
-#endif
 
 inline SIMD<int32_t, 8>::Type SIMD<int32_t, 8>::interleaveEach2Low(__m256i a, __m256i b)
 {

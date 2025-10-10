@@ -32,10 +32,9 @@ struct AvxSimdIntType<int16_t> : public BaseAvxSimdIntType<int16_t, AvxSimdIntTy
   AvxSimdIntConditionType<int16_t> operator!=(const AvxSimdIntType<int16_t>& other) const;
   AvxSimdIntConditionType<int16_t> operator<(const AvxSimdIntType<int16_t>& other) const;
 
-#ifdef PLATFORM_CPU_FEATURE_AVX2
   static inline AvxSimdIntType<int16_t> fromPackedInt8(SIMD<int8_t, 16>::ParamType packed);
   static inline AvxSimdIntType<int16_t> fromPackedUint8(SIMD<uint8_t, 16>::ParamType packed);
-#endif
+
   inline void setFromPackedUint8(SIMD<uint8_t, 16>::ParamType packed);
 
   inline AvxSimdIntType<int16_t> onesComplement() const;
@@ -62,10 +61,8 @@ struct SIMD<int16_t, 16> : public AvxIntSimd<int16_t>
 
   static inline Type populate(int16_t value);
 
-#ifdef PLATFORM_CPU_FEATURE_AVX2
   static inline Type abs(ParamType a);
   static inline Type mulSign(ParamType a, ParamType sign);
-#endif
   static inline Type mulFixedPoint(ParamType a, ParamType b);
 
   static inline ExtendedType extend(ParamType value); // (int32)(value)
@@ -140,7 +137,6 @@ inline AvxSimdIntConditionType<int16_t> AvxSimdIntType<int16_t>::operator<(const
   return AvxSimdIntConditionType<int16_t>::fromNativeType(_mm256_cmpgt_epi16(other.value, value));
 }
 
-#ifdef PLATFORM_CPU_FEATURE_AVX2
 inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::fromPackedInt8(SIMD<int8_t, 16>::ParamType packed)
 {
   return _mm256_cvtepi8_epi16(packed.value);
@@ -150,7 +146,6 @@ inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::fromPackedUint8(SIMD<uin
 {
   return _mm256_cvtepu8_epi16(packed.value);
 }
-#endif
 
 inline void AvxSimdIntType<int16_t>::setFromPackedUint8(SIMD<uint8_t, 16>::ParamType packed)
 {
@@ -167,7 +162,6 @@ inline typename SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::populate(int16_t valu
   return Type{_mm256_set1_epi16(value)};
 }
 
-#ifdef PLATFORM_CPU_FEATURE_AVX2
 inline SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::abs(ParamType a)
 {
   return Type{_mm256_abs_epi16(a.value)};
@@ -177,7 +171,6 @@ inline SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::mulSign(ParamType a, ParamType
 {
   return Type{_mm256_sign_epi16(a.value, sign.value)};
 }
-#endif
 
 inline SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::mulFixedPoint(ParamType a, ParamType b)
 {
