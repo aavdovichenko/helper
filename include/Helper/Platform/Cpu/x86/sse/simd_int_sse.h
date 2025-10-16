@@ -49,7 +49,7 @@ struct BaseSseSimdIntType : public SimdIntType<T, __m128i, Implementation>
 };
 
 template <typename T>
-struct SseIntSimd : public x86Simd, public IntSimd<T, __m128i, __m128i>
+struct SseIntSimd : public x86Simd<16>, public IntSimd<T, __m128i, __m128i>
 {
   typedef SseSimdIntType<T> Type;
   typedef SseSimdIntConditionType<T> ConditionType;
@@ -62,12 +62,6 @@ struct SseIntSimd : public x86Simd, public IntSimd<T, __m128i, __m128i>
 #endif
 
   static bool isSupported(SimdFeatures features = 0);
-
-  template<typename T1>
-  static inline T1* allocMemory(size_t count)
-  {
-    return x86Simd::allocMemory<T1>(count, 16);
-  }
 
   template<bool aligned> static inline Type load(const T* src);
   static inline Type load(const T* src);

@@ -55,7 +55,7 @@ struct BaseAvxSimdIntType : public SimdIntType<T, __m256i, Implementation>
 };
 
 template <typename T>
-struct AvxIntSimd : public x86Simd, public IntSimd<T, __m256i, __m256i>
+struct AvxIntSimd : public x86Simd<32>, public IntSimd<T, __m256i, __m256i>
 {
   typedef AvxSimdIntType<T> Type;
   typedef AvxSimdIntConditionType<T> ConditionType;
@@ -68,12 +68,6 @@ struct AvxIntSimd : public x86Simd, public IntSimd<T, __m256i, __m256i>
 #endif
 
   static bool isSupported(SimdFeatures features = 0);
-
-  template<typename T1>
-  static inline T1* allocMemory(size_t count)
-  {
-    return x86Simd::allocMemory<T1>(count, 32);
-  }
 
   template<bool aligned> static inline Type load(const T* src);
   static inline Type load(const T* src);

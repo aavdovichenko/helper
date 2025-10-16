@@ -23,7 +23,7 @@ static inline float reduce_mm128SSE3(__m128 x128);
 static inline double reduce_mm128dSSE(__m128d x128);
 
 template<>
-struct SIMD<float, 4> : public x86Simd
+struct SIMD<float, 4> : public x86Simd<16>
 {
   typedef __m128 Type;
   typedef __m128i ConditionType;

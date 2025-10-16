@@ -8,15 +8,16 @@ namespace Platform
 namespace Cpu
 {
 
+template <int alignment>
 struct x86Simd
 {
   static bool isPointerAligned(const void* p)
   {
-    return ((intptr_t)p & 0xf) == 0;
+    return ((intptr_t)p & (alignment - 1)) == 0;
   }
 
   template<typename T>
-  static inline T* allocMemory(size_t count, size_t alignment)
+  static inline T* allocMemory(size_t count)
   {
     return (T*)_mm_malloc(sizeof(T) * count, alignment);
   }

@@ -30,7 +30,7 @@ static inline float reduce_mm256(__m256 x256);
 static inline double reduce_mm256d(__m256d x256);
 
 template<>
-struct SIMD<float, 8> : public x86Simd
+struct SIMD<float, 8> : public x86Simd<32>
 {
   typedef __m256 Type;
   typedef __m256i ConditionType;
