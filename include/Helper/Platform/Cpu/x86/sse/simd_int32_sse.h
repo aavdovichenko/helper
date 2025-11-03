@@ -211,8 +211,8 @@ inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::mulExtended(Type a, Type b, Type
 {
   __m128i ab02 = _mm_mul_epi32(a, b);
   __m128i ab13 = _mm_mul_epi32(_mm_shuffle_epi32(a, _MM_SHUFFLE(2, 3, 0, 1)), _mm_shuffle_epi32(b, _MM_SHUFFLE(2, 3, 0, 1)));
-  abhi = Type{_mm_blend_epi32(_mm_shuffle_epi32(ab02, _MM_SHUFFLE(2, 3, 0, 1)), ab13, 0xaa)};
-  return Type{_mm_blend_epi32(ab02, _mm_shuffle_epi32(ab13, _MM_SHUFFLE(2, 3, 0, 1)), 0xaa)};
+  abhi = Type{_mm_blend_epi32(_mm_shuffle_epi32(ab02, _MM_SHUFFLE(2, 3, 0, 1)), ab13, 0xa)};
+  return Type{_mm_blend_epi32(ab02, _mm_shuffle_epi32(ab13, _MM_SHUFFLE(2, 3, 0, 1)), 0xa)};
 }
 
 template<int dstStride>
