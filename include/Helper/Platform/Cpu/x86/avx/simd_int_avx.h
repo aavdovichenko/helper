@@ -38,7 +38,7 @@ struct BaseAvxSimdIntType : public SimdIntType<T, __m256i, Implementation>
 
   template<bool aligned> static inline Implementation load(const T* src);
   static inline Implementation load(const T* src);
-  template<bool aligned> inline void store(T* dst);
+  template<bool aligned> inline void store(T* dst) const;
   static inline void store(T* dst, const Implementation& value);
   inline void store(T* dst) const;
 
@@ -68,6 +68,8 @@ struct AvxIntSimd : public x86Simd<32>, public IntSimd<T, __m256i, __m256i>
 #endif
 
   static bool isSupported(SimdFeatures features = 0);
+
+  static AvxSimdIntType<T> zero();
 
   template<bool aligned> static inline Type load(const T* src);
   static inline Type load(const T* src);
@@ -115,7 +117,7 @@ inline Implementation BaseAvxSimdIntType<T, Implementation>::load(const T* src)
 }
 
 template<typename T, typename Implementation> template<bool aligned>
-inline void BaseAvxSimdIntType<T, Implementation>::store(T* dst)
+inline void BaseAvxSimdIntType<T, Implementation>::store(T* dst) const
 {
   aligned ? _mm256_store_si256((__m256i*)dst, this->value) : _mm256_storeu_si256((__m256i*)dst, this->value);
 }
@@ -192,6 +194,12 @@ inline bool AvxIntSimd<T>::isSupported(SimdFeatures)
   static bool avx2Enabled = isAVX2Enabled();
 
   return avxEnabled && avx2Enabled;
+}
+
+template<typename T>
+inline AvxSimdIntType<T> AvxIntSimd<T>::zero()
+{
+  return AvxSimdIntType<T>::fromNativeType(_mm256_setzero_si256());
 }
 
 template<typename T> template<bool aligned>

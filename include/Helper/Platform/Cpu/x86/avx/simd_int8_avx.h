@@ -27,6 +27,8 @@ struct AvxSimdIntType<int8_t> : public BaseAvxSimdIntType<int8_t, AvxSimdIntType
 template<>
 struct SIMD<int8_t, 32> : public AvxIntSimd<int8_t>
 {
+  static AvxSimdIntType<int8_t> populate(int8_t value);
+
   template<int dstStride = 1>
   static inline void transpose4x8x8(Type* dst, Type w0, Type w1, Type w2, Type w3, Type w4, Type w5, Type w6, Type w7);
 };
@@ -55,6 +57,11 @@ inline AvxSimdIntType<int8_t>& AvxSimdIntType<int8_t>::operator+=(AvxSimdIntType
 inline AvxSimdIntConditionType<int8_t> AvxSimdIntType<int8_t>::operator==(const AvxSimdIntType<int8_t>& other) const
 {
   return AvxSimdIntConditionType<int8_t>::fromNativeType(_mm256_cmpeq_epi8(value, other.value));
+}
+
+inline AvxSimdIntType<int8_t> SIMD<int8_t, 32>::populate(int8_t value)
+{
+  return AvxSimdIntType<int8_t>{_mm256_set1_epi8(value)};
 }
 
 template<int dstStride>

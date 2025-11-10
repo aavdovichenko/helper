@@ -81,10 +81,13 @@ struct SIMD<int16_t, 8> : public SseIntSimd<int16_t>
   template <int16_t aFactor, int16_t bFactor>
   static inline ExtendedType mulAdd(ParamType a, ParamType b); // (int32)(a*aFactor + b*bFactor)
 
+  static inline void transpose(Type& w0, Type& w1, Type& w2, Type& w3, Type& w4, Type& w5, Type& w6, Type& w7);
   template<int dstStride = 1>
   static inline void transpose(Type* dst, Type w0, Type w1, Type w2, Type w3, Type w4, Type w5, Type w6, Type w7);
   template<bool aligned, int dstStride = 1, int srcStride = 1>
   static inline void transpose(Type* dst, const int16_t* src);
+  template<bool dstAligned, bool srcAligned>
+  static inline void transpose(int16_t* dst, size_t dstStride, const int16_t* src, size_t srcStride);
 
   static int64_t conditionBitMask(ConditionParamType c0, ConditionParamType c1);
 };
@@ -289,44 +292,24 @@ inline SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::ExtendedType::round() const
   return Type{_mm_packs_epi32(_mm_srai_epi32(_mm_add_epi32(lo, rounding), fixedPointBits), _mm_srai_epi32(_mm_add_epi32(hi, rounding), fixedPointBits))};
 }
 
+inline void SIMD<int16_t, 8>::transpose(Type& w0, Type& w1, Type& w2, Type& w3, Type& w4, Type& w5, Type& w6, Type& w7)
+{
+  transposeSseInt16(w0.value, w1.value, w2.value, w3.value, w4.value, w5.value, w6.value, w7.value);
+}
+
 template<int dstStride>
 inline void SIMD<int16_t, 8>::transpose(Type* dst, Type w0, Type w1, Type w2, Type w3, Type w4, Type w5, Type w6, Type w7)
 {
-  // 00 01 02 03 04 05 06 07
-  // 10 11 12 13 14 15 16 17
-  // 20 21 22 23 24 25 26 27
-  // 30 31 32 33 34 35 36 37
-  // 40 41 42 43 44 45 46 47
-  // 50 51 52 53 54 55 56 57
-  // 60 61 62 63 64 65 66 67
-  // 70 71 72 73 74 75 76 77
+  transposeSseInt16(w0.value, w1.value, w2.value, w3.value, w4.value, w5.value, w6.value, w7.value);
 
-  __m128i tmp0 = _mm_unpacklo_epi16(w0, w1); // 00 10 01 11 02 12 03 13
-  __m128i tmp1 = _mm_unpackhi_epi16(w0, w1); // 04 14 05 15 06 16 07 17 
-  __m128i tmp2 = _mm_unpacklo_epi16(w2, w3); // 20 30 21 31 22 32 23 33
-  __m128i tmp3 = _mm_unpackhi_epi16(w2, w3); // 24 34 25 35 26 36 27 37
-  __m128i tmp4 = _mm_unpacklo_epi16(w4, w5); // 40 50 41 51 42 52 43 53
-  __m128i tmp5 = _mm_unpackhi_epi16(w4, w5); // 44 54 45 55 46 56 47 57
-  __m128i tmp6 = _mm_unpacklo_epi16(w6, w7); // 60 70 61 71 62 72 63 73
-  __m128i tmp7 = _mm_unpackhi_epi16(w6, w7); // 64 74 65 75 66 76 67 77
-
-  w0 = _mm_unpacklo_epi32(tmp0, tmp2); // 00 10 20 30 01 11 21 31
-  w1 = _mm_unpackhi_epi32(tmp0, tmp2); // 02 12 22 32 03 13 23 33
-  w2 = _mm_unpacklo_epi32(tmp1, tmp3); // 04 14 24 34 05 15 25 35
-  w3 = _mm_unpackhi_epi32(tmp1, tmp3); // 06 16 26 36 07 17 27 37
-  w4 = _mm_unpacklo_epi32(tmp4, tmp6); // 40 50 60 70 41 51 61 71 
-  w5 = _mm_unpackhi_epi32(tmp4, tmp6); // 42 52 62 72 43 53 63 73
-  w6 = _mm_unpacklo_epi32(tmp5, tmp7); // 44 54 64 74 45 55 65 75
-  w7 = _mm_unpackhi_epi32(tmp5, tmp7); // 46 56 66 76 47 57 67 77
-  
-  dst[0 * dstStride].value = _mm_unpacklo_epi64(w0, w4); // 00 10 20 30 40 50 60 70
-  dst[1 * dstStride].value = _mm_unpackhi_epi64(w0, w4); // 01 11 21 31 41 51 61 71 
-  dst[2 * dstStride].value = _mm_unpacklo_epi64(w1, w5); // 02 12 22 32 42 52 62 72
-  dst[3 * dstStride].value = _mm_unpackhi_epi64(w1, w5); // 03 13 23 33 43 53 63 73
-  dst[4 * dstStride].value = _mm_unpacklo_epi64(w2, w6); // 04 14 24 34 44 54 64 74
-  dst[5 * dstStride].value = _mm_unpackhi_epi64(w2, w6); // 05 15 25 35 45 55 65 75
-  dst[6 * dstStride].value = _mm_unpacklo_epi64(w3, w7); // 06 16 26 36 46 56 66 76
-  dst[7 * dstStride].value = _mm_unpackhi_epi64(w3, w7); // 07 17 27 37 47 57 67 77
+  dst[0 * dstStride].value = w0;
+  dst[1 * dstStride].value = w1;
+  dst[2 * dstStride].value = w2;
+  dst[3 * dstStride].value = w3;
+  dst[4 * dstStride].value = w4;
+  dst[5 * dstStride].value = w5;
+  dst[6 * dstStride].value = w6;
+  dst[7 * dstStride].value = w7;
 }
 
 template<bool aligned, int dstStride, int srcStride>
@@ -337,6 +320,22 @@ inline void SIMD<int16_t, 8>::transpose(Type* dst, const int16_t* src)
     load<aligned>(src + 8 * 2 * srcStride), load<aligned>(src + 8 * 3 * srcStride),
     load<aligned>(src + 8 * 4 * srcStride), load<aligned>(src + 8 * 5 * srcStride),
     load<aligned>(src + 8 * 6 * srcStride), load<aligned>(src + 8 * 7 * srcStride));
+}
+
+template<bool dstAligned, bool srcAligned>
+inline void SIMD<int16_t, 8>::transpose(int16_t* dst, size_t dstStride, const int16_t* src, size_t srcStride)
+{
+  Type w0 = load<srcAligned>(src + 0 * srcStride), w1 = load<srcAligned>(src + 1 * srcStride);
+  Type w2 = load<srcAligned>(src + 2 * srcStride), w3 = load<srcAligned>(src + 3 * srcStride);
+  Type w4 = load<srcAligned>(src + 4 * srcStride), w5 = load<srcAligned>(src + 5 * srcStride);
+  Type w6 = load<srcAligned>(src + 6 * srcStride), w7 = load<srcAligned>(src + 7 * srcStride);
+
+  transposeSseInt16(w0.value, w1.value, w2.value, w3.value, w4.value, w5.value, w6.value, w7.value);
+
+  w0.store<dstAligned>(dst + 0 * dstStride); w1.store<dstAligned>(dst + 1 * dstStride);
+  w2.store<dstAligned>(dst + 2 * dstStride); w3.store<dstAligned>(dst + 3 * dstStride);
+  w4.store<dstAligned>(dst + 4 * dstStride); w5.store<dstAligned>(dst + 5 * dstStride);
+  w6.store<dstAligned>(dst + 6 * dstStride); w7.store<dstAligned>(dst + 7 * dstStride);
 }
 
 inline SIMD<int16_t, 8>::ExtendedType SIMD<int16_t, 8>::ExtendedType::populate(int32_t value)

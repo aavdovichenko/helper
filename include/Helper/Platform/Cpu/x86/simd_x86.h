@@ -11,6 +11,11 @@ namespace Cpu
 template <int alignment>
 struct x86Simd
 {
+  constexpr static int byteAlignment()
+  {
+    return alignment;
+  }
+
   static bool isPointerAligned(const void* p)
   {
     return ((intptr_t)p & (alignment - 1)) == 0;

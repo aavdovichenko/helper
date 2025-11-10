@@ -44,8 +44,23 @@ struct SseSimdIntType<int32_t> : public BaseSseSimdIntType<int32_t, SseSimdIntTy
   SseSimdIntType<int32_t> operator*(int32_t factor) const;
   SseSimdIntType<int32_t>& operator*=(int32_t factor);
 
+  static inline SseSimdIntType<int32_t> fromPackedInt8(uint32_t packed);
   static inline SseSimdIntType<int32_t> fromPackedUint8(uint32_t packed);
+  static inline SseSimdIntType<int32_t> fromPackedInt16(uint64_t packed);
+  static inline SseSimdIntType<int32_t> fromPackedUint16(uint64_t packed);
   inline void setFromPackedUint8(uint32_t packed);
+
+  template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const int8_t* p);
+  template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const uint8_t* p);
+  template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const int16_t* p);
+  template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const uint16_t* p);
+  template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const uint32_t* p);
+
+  template<bool aligned> inline void convertAndStore(int8_t* p) const;
+  template<bool aligned> inline void convertAndStore(uint8_t* p) const;
+  template<bool aligned> inline void convertAndStore(int16_t* p) const;
+  template<bool aligned> inline void convertAndStore(uint16_t* p) const;
+  template<bool aligned> inline void convertAndStore(uint32_t* p) const;
 #endif
 };
 
@@ -148,14 +163,89 @@ inline SseSimdIntType<int32_t>& SseSimdIntType<int32_t>::operator*=(int32_t fact
   return *this;
 }
 
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedInt8(uint32_t packed)
+{
+  return _mm_cvtepi8_epi32(_mm_set1_epi32(packed));
+}
+
 inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedUint8(uint32_t packed)
 {
   return _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
 }
 
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedInt16(uint64_t packed)
+{
+  return _mm_cvtepi16_epi32(_mm_set1_epi64x(packed));
+}
+
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedUint16(uint64_t packed)
+{
+  return _mm_cvtepu16_epi32(_mm_set1_epi64x(packed));
+}
+
 inline void SseSimdIntType<int32_t>::setFromPackedUint8(uint32_t packed)
 {
   value = _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
+}
+
+template<bool aligned>
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::loadAndConvert(const int8_t* p)
+{
+  return fromPackedInt8(*(uint32_t*)p);
+}
+
+template<bool aligned>
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::loadAndConvert(const uint8_t* p)
+{
+  return fromPackedUint8(*(uint32_t*)p);
+}
+
+template<bool aligned>
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::loadAndConvert(const int16_t* p)
+{
+  return fromPackedInt16(*(uint64_t*)p);
+}
+
+template<bool aligned>
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::loadAndConvert(const uint16_t* p)
+{
+  return fromPackedUint16(*(uint64_t*)p);
+}
+
+template<bool aligned>
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::loadAndConvert(const uint32_t* p)
+{
+  return load<aligned>((const int32_t*)p);
+}
+
+template<bool aligned>
+inline void SseSimdIntType<int32_t>::convertAndStore(int8_t* p) const
+{
+  *(int32_t*)p = _mm_cvtsi128_si32(_mm_shuffle_epi8(value, _mm_setr_epi8(0, 4, 8, 12, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)));
+}
+
+template<bool aligned>
+inline void SseSimdIntType<int32_t>::convertAndStore(uint8_t* p) const
+{
+  *(uint32_t*)p = _mm_cvtsi128_si32(_mm_shuffle_epi8(value, _mm_setr_epi8(0, 4, 8, 12, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)));
+}
+
+template<bool aligned>
+inline void SseSimdIntType<int32_t>::convertAndStore(int16_t* p) const
+{
+  *(int64_t*)p = _mm_cvtsi128_si64(_mm_packs_epi32(value, value));
+}
+
+template<bool aligned>
+inline void SseSimdIntType<int32_t>::convertAndStore(uint16_t* p) const
+{
+  *(uint64_t*)p = _mm_cvtsi128_si64(_mm_packus_epi32(value, value));
+}
+
+template<bool aligned>
+inline void SseSimdIntType<int32_t>::convertAndStore(uint32_t* p) const
+{
+  store<aligned>((int32_t*)p);
 }
 #endif
 

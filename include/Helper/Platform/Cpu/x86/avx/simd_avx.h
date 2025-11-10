@@ -13,6 +13,8 @@
 #include "simd_int32_avx.h"
 #include "simd_int64_avx.h"
 #include "simd_int128_avx.h"
+#include "simd_uint8_avx.h"
+#include "simd_uint16_avx.h"
 #include "simd_uint32_avx.h"
 #include "simd_uint64_avx.h"
 #endif

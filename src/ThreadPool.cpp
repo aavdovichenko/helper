@@ -1,5 +1,7 @@
 #include <Helper/ThreadPool.h>
 
+#include <cassert>
+
 namespace Helper
 {
 
@@ -46,6 +48,70 @@ int ThreadPool::getThreadCount() const
   return m_threadCount;
 }
 
+void ThreadPool::setCommonThreadFunction(const CommonThreadFunction& f)
+{
+  waitJobs();
+  m_commonThreadFunction = f;
+}
+
+ThreadPool::Thread* ThreadPool::lockThread(std::unique_lock<std::mutex>& lock)
+{
+  for (; !m_freeThreads;)
+    m_condition.wait(lock);
+
+  Thread* thread = m_freeThreads;
+  m_freeThreads = thread->m_next;
+  m_freeThreadCount--;
+  return thread;
+}
+
+bool ThreadPool::addJob(const void* threadData)
+{
+  assert(m_commonThreadFunction);
+  if (!m_commonThreadFunction)
+    return false;
+
+  if (!m_threads)
+  {
+    m_commonThreadFunction(threadData);
+    return true;
+  }
+
+  std::unique_lock<std::mutex> lock(m_mutex);
+  Thread* thread = lockThread(lock);
+
+  thread->m_job = nullptr;
+  thread->m_data = threadData;
+  thread->m_condition.notify_one();
+
+  return true;
+}
+
+bool ThreadPool::addJobs(const void* const* start, const void* const* end)
+{
+  assert(m_commonThreadFunction);
+  if (!m_commonThreadFunction)
+    return false;
+
+  if (!m_threads)
+  {
+    for(; start != end; ++start)
+      m_commonThreadFunction(*start);
+    return true;
+  }
+
+  std::unique_lock<std::mutex> lock(m_mutex);
+  for (; start != end; ++start)
+  {
+    Thread* thread = lockThread(lock);
+    thread->m_job = nullptr;
+    thread->m_data = *start;
+    thread->m_condition.notify_one();
+  }
+
+  return true;
+}
+
 bool ThreadPool::addJob(const std::function<void()>& job)
 {
   if (!m_threads)
@@ -55,12 +121,8 @@ bool ThreadPool::addJob(const std::function<void()>& job)
   }
 
   std::unique_lock<std::mutex> lock(m_mutex);
-  for (; !m_freeThreads;)
-    m_condition.wait(lock);
+  Thread* thread = lockThread(lock);
 
-  Thread* thread = m_freeThreads;
-  m_freeThreads = thread->m_next;
-  m_freeThreadCount--;
   thread->m_job = job;
   thread->m_condition.notify_one();
 
@@ -86,6 +148,11 @@ void ThreadPool::Thread::execute()
 
     if (m_job)
       m_job();
+    else if (m_threadPool->m_commonThreadFunction)
+    {
+      assert(m_data);
+      m_threadPool->m_commonThreadFunction(m_data);
+    }
 
     lock.lock();
     m_job = nullptr;

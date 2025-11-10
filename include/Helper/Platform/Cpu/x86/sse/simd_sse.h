@@ -10,6 +10,7 @@
 #include "simd_int32_sse.h"
 #include "simd_int64_sse.h"
 #include "simd_uint8_sse.h"
+#include "simd_uint16_sse.h"
 #include "simd_uint32_sse.h"
 #include "simd_float_sse.h"
 

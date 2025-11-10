@@ -840,8 +840,11 @@ typedef typename SIMD<int64_t, 4>::Type int64x4_t;
 typedef typename SIMD<int128_t, 2>::Type int128x2_t;
 
 typedef typename SIMD<uint8_t, 16>::Type uint8x16_t;
+typedef typename SIMD<uint16_t, 8>::Type uint16x8_t;
 typedef typename SIMD<uint32_t, 4>::Type uint32x4_t;
 
+typedef typename SIMD<uint8_t, 32>::Type uint8x32_t;
+typedef typename SIMD<uint16_t, 16>::Type uint16x16_t;
 typedef typename SIMD<uint32_t, 8>::Type uint32x8_t;
 typedef typename SIMD<uint64_t, 4>::Type uint64x4_t;
 

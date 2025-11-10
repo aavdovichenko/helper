@@ -52,6 +52,8 @@ contains(QMAKE_HOST.arch, x86_64) | contains(QMAKE_HOST.arch, x86) {
                include/Helper/Platform/Cpu/x86/avx/simd_int32_avx.h \
                include/Helper/Platform/Cpu/x86/avx/simd_int64_avx.h \
                include/Helper/Platform/Cpu/x86/avx/simd_int128_avx.h \
+               include/Helper/Platform/Cpu/x86/avx/simd_uint8_avx.h \
+               include/Helper/Platform/Cpu/x86/avx/simd_uint16_avx.h \
                include/Helper/Platform/Cpu/x86/avx/simd_uint32_avx.h \
                include/Helper/Platform/Cpu/x86/avx/simd_uint64_avx.h \
                include/Helper/Platform/Cpu/x86/sse/simd_sse.h \
@@ -62,6 +64,7 @@ contains(QMAKE_HOST.arch, x86_64) | contains(QMAKE_HOST.arch, x86) {
                include/Helper/Platform/Cpu/x86/sse/simd_int32_sse.h \
                include/Helper/Platform/Cpu/x86/sse/simd_int64_sse.h \
                include/Helper/Platform/Cpu/x86/sse/simd_uint8_sse.h \
+               include/Helper/Platform/Cpu/x86/sse/simd_uint16_sse.h \
                include/Helper/Platform/Cpu/x86/sse/simd_uint32_sse.h \
                include/Helper/Platform/Cpu/x86/simd_x86.h \
                include/Helper/Platform/Cpu/x86/x86.h

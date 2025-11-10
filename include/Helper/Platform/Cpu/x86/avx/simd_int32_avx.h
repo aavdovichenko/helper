@@ -36,8 +36,23 @@ struct AvxSimdIntType<int32_t> : public BaseAvxSimdIntType<int32_t, AvxSimdIntTy
 
   AvxIntSimd<int32_t>::ConditionType operator<(const AvxSimdIntType<int32_t>& other) const;
 
+  static inline AvxSimdIntType<int32_t> fromPackedInt8(uint64_t packed);
   static inline AvxSimdIntType<int32_t> fromPackedUint8(uint64_t packed);
+  static inline AvxSimdIntType<int32_t> fromPackedInt16(const SseSimdIntType<int16_t>& packed);
+  static inline AvxSimdIntType<int32_t> fromPackedUint16(const SseSimdIntType<uint16_t>& packed);
   inline void setFromPackedUint8(uint64_t packed);
+
+  template<bool aligned> static inline AvxSimdIntType<int32_t> loadAndConvert(const int8_t* p);
+  template<bool aligned> static inline AvxSimdIntType<int32_t> loadAndConvert(const uint8_t* p);
+  template<bool aligned> static inline AvxSimdIntType<int32_t> loadAndConvert(const int16_t* p);
+  template<bool aligned> static inline AvxSimdIntType<int32_t> loadAndConvert(const uint16_t* p);
+  template<bool aligned> static inline AvxSimdIntType<int32_t> loadAndConvert(const uint32_t* p);
+
+  template<bool aligned> inline void convertAndStore(int8_t* p) const;
+  template<bool aligned> inline void convertAndStore(uint8_t* p) const;
+  template<bool aligned> inline void convertAndStore(int16_t* p) const;
+  template<bool aligned> inline void convertAndStore(uint16_t* p) const;
+  template<bool aligned> inline void convertAndStore(uint32_t* p) const;
 };
 
 template<>
@@ -159,14 +174,89 @@ inline AvxIntSimd<int32_t>::ConditionType AvxSimdIntType<int32_t>::operator<(con
   return AvxIntSimd<int32_t>::ConditionType{_mm256_cmpgt_epi32(other.value, value)};
 }
 
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedInt8(uint64_t packed)
+{
+  return _mm256_cvtepi8_epi32(_mm_set1_epi64x(packed));
+}
+
 inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedUint8(uint64_t packed)
 {
   return _mm256_cvtepu8_epi32(_mm_set1_epi64x(packed));
 }
 
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedInt16(const SseSimdIntType<int16_t>& packed)
+{
+  return _mm256_cvtepi16_epi32(packed);
+}
+
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedUint16(const SseSimdIntType<uint16_t>& packed)
+{
+  return _mm256_cvtepu16_epi32(packed);
+}
+
 inline void AvxSimdIntType<int32_t>::setFromPackedUint8(uint64_t packed)
 {
   value = _mm256_cvtepu8_epi32(_mm_set1_epi64x(packed));
+}
+
+template<bool aligned>
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::loadAndConvert(const int8_t* p)
+{
+  return fromPackedInt8(*(uint64_t*)p);
+}
+
+template<bool aligned>
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::loadAndConvert(const uint8_t* p)
+{
+  return fromPackedUint8(*(uint64_t*)p);
+}
+
+template<bool aligned>
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::loadAndConvert(const int16_t* p)
+{
+  return fromPackedInt16(SseSimdIntType<int16_t>::load<aligned>(p));
+}
+
+template<bool aligned>
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::loadAndConvert(const uint16_t* p)
+{
+  return fromPackedUint16(SseSimdIntType<uint16_t>::load<aligned>(p));
+}
+
+template<bool aligned>
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::loadAndConvert(const uint32_t* p)
+{
+  return load<aligned>((int32_t*)p);
+}
+
+template<bool aligned>
+inline void AvxSimdIntType<int32_t>::convertAndStore(int8_t* p) const
+{
+  *(int64_t*)p = _mm_cvtsi128_si64(_mm256_castsi256_si128(_mm256_shuffle_epi8(value, _mm256_setr_epi8(0, 4, 8, 12, 16, 20, 24, 28, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31))));
+}
+
+template<bool aligned>
+inline void AvxSimdIntType<int32_t>::convertAndStore(uint8_t* p) const
+{
+  *(uint64_t*)p = _mm_cvtsi128_si64(_mm256_castsi256_si128(_mm256_shuffle_epi8(value, _mm256_setr_epi8(0, 4, 8, 12, 16, 20, 24, 28, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31))));
+}
+
+template<bool aligned>
+inline void AvxSimdIntType<int32_t>::convertAndStore(int16_t* p) const
+{
+  SseSimdIntType<int16_t>::fromNativeType(_mm256_castsi256_si128(_mm256_packs_epi32(value, _mm256_permute2x128_si256(value, value, 1)))).store<aligned>(p);
+}
+
+template<bool aligned>
+inline void AvxSimdIntType<int32_t>::convertAndStore(uint16_t* p) const
+{
+  SseSimdIntType<uint16_t>::fromNativeType(_mm256_castsi256_si128(_mm256_packus_epi32(value, _mm256_permute2x128_si256(value, value, 1)))).store<aligned>(p);
+}
+
+template<bool aligned>
+inline void AvxSimdIntType<int32_t>::convertAndStore(uint32_t* p) const
+{
+  store<aligned>((int32_t*)p);
 }
 
 // SIMD<int32_t, 8>
