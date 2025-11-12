@@ -40,7 +40,10 @@ struct AvxSimdIntType<int32_t> : public BaseAvxSimdIntType<int32_t, AvxSimdIntTy
   static inline AvxSimdIntType<int32_t> fromPackedUint8(uint64_t packed);
   static inline AvxSimdIntType<int32_t> fromPackedInt16(const SseSimdIntType<int16_t>& packed);
   static inline AvxSimdIntType<int32_t> fromPackedUint16(const SseSimdIntType<uint16_t>& packed);
+  static inline AvxSimdIntType<int32_t> fromPackedUint24(const AvxSimdIntType<int32_t>& packed);
   inline void setFromPackedUint8(uint64_t packed);
+
+  inline AvxSimdIntType<int32_t> toPackedUint24() const;
 
   template<bool aligned> static inline AvxSimdIntType<int32_t> loadAndConvert(const int8_t* p);
   template<bool aligned> static inline AvxSimdIntType<int32_t> loadAndConvert(const uint8_t* p);
@@ -104,10 +107,13 @@ struct SIMD<int32_t, 8> : public AvxIntSimd<int32_t>
 
   static inline SIMD<int16_t, 16>::Type interleaveLowHigh16BitSaturated(Type lo, Type hi);
 
+  static inline void transpose(Type& w0, Type& w1, Type& w2, Type& w3, Type& w4, Type& w5, Type& w6, Type& w7);
   template<int dstStride = 1>
   static inline void transpose(Type* dst, ParamType w0, ParamType w1, ParamType w2, ParamType w3, ParamType w4, ParamType w5, ParamType w6, ParamType w7);
   template<bool aligned, int dstStride = 1, int srcStride = 1>
   static inline void transpose(Type* dst, const int32_t* src);
+  template<bool dstAligned, bool srcAligned>
+  static inline void transpose(int32_t* dst, size_t dstStride, const int32_t* src, size_t srcStride);
 
   static inline Type interleaveLow16Bit(__m256i a, __m256i b)
   {
@@ -194,9 +200,21 @@ inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedUint16(const S
   return _mm256_cvtepu16_epi32(packed);
 }
 
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedUint24(const AvxSimdIntType<int32_t>& packed)
+{
+  __m256i x = _mm256_permutevar8x32_epi32(packed.value, _mm256_setr_epi32(0, 1, 2, 3, 3, 4, 5, 7));
+  return _mm256_shuffle_epi8(x, _mm256_setr_epi8(0, 1, 2, -128, 3, 4, 5, -128, 6, 7, 8, -128, 9, 10, 11, -128, 0, 1, 2, -128, 3, 4, 5, -128, 6, 7, 8, -128, 9, 10, 11, -128));
+}
+
 inline void AvxSimdIntType<int32_t>::setFromPackedUint8(uint64_t packed)
 {
   value = _mm256_cvtepu8_epi32(_mm_set1_epi64x(packed));
+}
+
+inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::toPackedUint24() const
+{
+  __m256i x = _mm256_shuffle_epi8(value, _mm256_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -128, -128, -128, -128, 0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -128, -128, -128, -128));
+  return _mm256_permutevar8x32_epi32(x, _mm256_setr_epi32(0, 1, 2, 4, 5, 6, 3, 7));
 }
 
 template<bool aligned>
@@ -232,13 +250,15 @@ inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::loadAndConvert(const uin
 template<bool aligned>
 inline void AvxSimdIntType<int32_t>::convertAndStore(int8_t* p) const
 {
-  *(int64_t*)p = _mm_cvtsi128_si64(_mm256_castsi256_si128(_mm256_shuffle_epi8(value, _mm256_setr_epi8(0, 4, 8, 12, 16, 20, 24, 28, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31))));
+  __m256i packed = _mm256_shuffle_epi8(value, _mm256_setr_epi8(0, 4, 8, 12, 16, 20, 24, 28, 8, 9, 10, 11, 12, 13, 14, 15, 0, 4, 8, 12, 16, 20, 24, 28, 8, 9, 10, 11, 12, 13, 14, 15));
+  *(int64_t*)p = _mm_cvtsi128_si64(_mm256_castsi256_si128(_mm256_permutevar8x32_epi32(packed, _mm256_setr_epi32(0, 4, 2, 3, 4, 5, 6, 7))));
 }
 
 template<bool aligned>
 inline void AvxSimdIntType<int32_t>::convertAndStore(uint8_t* p) const
 {
-  *(uint64_t*)p = _mm_cvtsi128_si64(_mm256_castsi256_si128(_mm256_shuffle_epi8(value, _mm256_setr_epi8(0, 4, 8, 12, 16, 20, 24, 28, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31))));
+  __m256i packed = _mm256_shuffle_epi8(value, _mm256_setr_epi8(0, 4, 8, 12, 16, 20, 24, 28, 8, 9, 10, 11, 12, 13, 14, 15, 0, 4, 8, 12, 16, 20, 24, 28, 8, 9, 10, 11, 12, 13, 14, 15));
+  *(uint64_t*)p = _mm_cvtsi128_si64(_mm256_castsi256_si128(_mm256_permutevar8x32_epi32(packed, _mm256_setr_epi32(0, 4, 2, 3, 4, 5, 6, 7))));
 }
 
 template<bool aligned>
@@ -295,44 +315,24 @@ inline SIMD<int16_t, 16>::Type SIMD<int32_t, 8>::interleaveLowHigh16BitSaturated
   return SIMD<int16_t, 16>::Type{_mm256_packs_epi32(lo, hi)};
 }
 
+inline void SIMD<int32_t, 8>::transpose(Type& w0, Type& w1, Type& w2, Type& w3, Type& w4, Type& w5, Type& w6, Type& w7)
+{
+  transposeAvxInt32(w0.value, w1.value, w2.value, w3.value, w4.value, w5.value, w6.value, w7.value);
+}
+
 template<int dstStride>
 inline void SIMD<int32_t, 8>::transpose(Type* dst, ParamType m0, ParamType m1, ParamType m2, ParamType m3, ParamType m4, ParamType m5, ParamType m6, ParamType m7)
 {
-  // 00 01 02 03 04 05 06 07
-  // 10 11 12 13 14 15 16 17
-  // 20 21 22 23 24 25 26 27
-  // 30 31 32 33 34 35 36 37
-  // 40 41 42 43 44 45 46 47
-  // 50 51 52 53 54 55 56 57
-  // 60 61 62 63 64 65 66 67
-  // 70 71 72 73 74 75 76 77
+  transposeAvxInt32(m0.value, m1.value, m2.value, m3.value, m4.value, m5.value, m6.value, m7.value);
 
-  __m256i x0 = _mm256_permute2x128_si256(m0.value, m4.value, 0x20); // 00 01 02 03 40 41 42 43
-  __m256i x1 = _mm256_permute2x128_si256(m1.value, m5.value, 0x20); // 10 11 12 13 50 51 52 53
-  __m256i x2 = _mm256_permute2x128_si256(m2.value, m6.value, 0x20); // 20 21 22 23 60 61 62 63
-  __m256i x3 = _mm256_permute2x128_si256(m3.value, m7.value, 0x20); // 30 31 32 33 70 71 72 73
-  __m256i x4 = _mm256_permute2x128_si256(m0.value, m4.value, 0x31); // 04 05 06 07 44 45 46 47
-  __m256i x5 = _mm256_permute2x128_si256(m1.value, m5.value, 0x31); // 14 15 16 17 54 55 56 57
-  __m256i x6 = _mm256_permute2x128_si256(m2.value, m6.value, 0x31); // 24 25 26 27 64 65 66 67
-  __m256i x7 = _mm256_permute2x128_si256(m3.value, m7.value, 0x31); // 34 35 36 37 74 75 76 77
-
-  __m256i w0 = _mm256_unpacklo_epi32(x0, x1); // 00 10 01 11 
-  __m256i w1 = _mm256_unpackhi_epi32(x0, x1); // 02 12 03 13 
-  __m256i w2 = _mm256_unpacklo_epi32(x2, x3); // 20 30 21 31 
-  __m256i w3 = _mm256_unpackhi_epi32(x2, x3); // 22 32 23 33 
-  __m256i w4 = _mm256_unpacklo_epi32(x4, x5); // 
-  __m256i w5 = _mm256_unpackhi_epi32(x4, x5); // 
-  __m256i w6 = _mm256_unpacklo_epi32(x6, x7); // 
-  __m256i w7 = _mm256_unpackhi_epi32(x6, x7); // 
-
-  dst[0 * dstStride].value = _mm256_unpacklo_epi64(w0, w2); // 00 10 20 30
-  dst[1 * dstStride].value = _mm256_unpackhi_epi64(w0, w2); // 01 11 21 31
-  dst[2 * dstStride].value = _mm256_unpacklo_epi64(w1, w3); // 02 12 22 32
-  dst[3 * dstStride].value = _mm256_unpackhi_epi64(w1, w3); // 03 13 23 33
-  dst[4 * dstStride].value = _mm256_unpacklo_epi64(w4, w6); //
-  dst[5 * dstStride].value = _mm256_unpackhi_epi64(w4, w6); //
-  dst[6 * dstStride].value = _mm256_unpacklo_epi64(w5, w7); //
-  dst[7 * dstStride].value = _mm256_unpackhi_epi64(w5, w7); //
+  dst[0 * dstStride].value = m0.value;
+  dst[1 * dstStride].value = m1.value;
+  dst[2 * dstStride].value = m2.value;
+  dst[3 * dstStride].value = m3.value;
+  dst[4 * dstStride].value = m4.value;
+  dst[5 * dstStride].value = m5.value;
+  dst[6 * dstStride].value = m6.value;
+  dst[7 * dstStride].value = m7.value;
 }
 
 template<bool aligned, int dstStride, int srcStride>
@@ -351,6 +351,22 @@ inline void SIMD<int32_t, 8>::transpose(Type* dst, const int32_t* src)
   SIMD<int, 4>::transpose<aligned, dstStride * 2, srcStride * 2>((Type4*)dst + 4 * dstStride * 2, src + 4);
   SIMD<int, 4>::transpose<aligned, dstStride * 2, srcStride * 2>((Type4*)dst + 4 * dstStride * 2 + 1, src + 4 * 8 * srcStride + 4);
 #endif
+}
+
+template<bool dstAligned, bool srcAligned>
+inline void SIMD<int32_t, 8>::transpose(int32_t* dst, size_t dstStride, const int32_t* src, size_t srcStride)
+{
+  Type w0 = load<srcAligned>(src + 0 * srcStride), w1 = load<srcAligned>(src + 1 * srcStride);
+  Type w2 = load<srcAligned>(src + 2 * srcStride), w3 = load<srcAligned>(src + 3 * srcStride);
+  Type w4 = load<srcAligned>(src + 4 * srcStride), w5 = load<srcAligned>(src + 5 * srcStride);
+  Type w6 = load<srcAligned>(src + 6 * srcStride), w7 = load<srcAligned>(src + 7 * srcStride);
+
+  transposeAvxInt32(w0.value, w1.value, w2.value, w3.value, w4.value, w5.value, w6.value, w7.value);
+
+  w0.store<dstAligned>(dst + 0 * dstStride); w1.store<dstAligned>(dst + 1 * dstStride);
+  w2.store<dstAligned>(dst + 2 * dstStride); w3.store<dstAligned>(dst + 3 * dstStride);
+  w4.store<dstAligned>(dst + 4 * dstStride); w5.store<dstAligned>(dst + 5 * dstStride);
+  w6.store<dstAligned>(dst + 6 * dstStride); w7.store<dstAligned>(dst + 7 * dstStride);
 }
 
 inline void SIMD<int32_t, 8>::extractByteComponents(ParamType a, uint64_t& c0, uint64_t& c1, uint64_t& c2, uint64_t& c3)
