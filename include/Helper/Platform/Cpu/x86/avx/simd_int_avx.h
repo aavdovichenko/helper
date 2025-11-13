@@ -57,6 +57,7 @@ struct BaseAvxSimdIntType : public SimdIntType<T, __m256i, Implementation>
 template <typename T>
 struct AvxIntSimd : public x86Simd<32>, public IntSimd<T, __m256i, __m256i>
 {
+  typedef T ItemType;
   typedef AvxSimdIntType<T> Type;
   typedef AvxSimdIntConditionType<T> ConditionType;
 #if defined(DEBUG) || defined(_DEBUG)

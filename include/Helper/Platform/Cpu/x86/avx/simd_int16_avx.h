@@ -37,6 +37,12 @@ struct AvxSimdIntType<int16_t> : public BaseAvxSimdIntType<int16_t, AvxSimdIntTy
 
   inline void setFromPackedUint8(SIMD<uint8_t, 16>::ParamType packed);
 
+  template<bool aligned> static inline AvxSimdIntType<int16_t> loadAndConvert(const int8_t* p);
+  template<bool aligned> static inline AvxSimdIntType<int16_t> loadAndConvert(const uint8_t* p);
+
+  template<bool aligned> inline void convertAndStore(int8_t* p) const;
+  template<bool aligned> inline void convertAndStore(uint8_t* p) const;
+
   inline AvxSimdIntType<int16_t> onesComplement() const;
 };
 
@@ -47,9 +53,15 @@ struct SIMD<int16_t, 16> : public AvxIntSimd<int16_t>
 
   struct ExtendedType
   {
+    typedef int32_t ItemType;
+
     __m256i lo, hi;
 
-    static ExtendedType populate(int32_t value);
+    static inline ExtendedType zero();
+    static inline ExtendedType populate(int32_t value);
+
+    static inline ExtendedType min(ExtendedType a, ExtendedType b);
+    static inline ExtendedType max(ExtendedType a, ExtendedType b);
 
     template <int fixedPointBits> Type descale() const;
     template <int fixedPointBits> Type round() const;
@@ -60,6 +72,9 @@ struct SIMD<int16_t, 16> : public AvxIntSimd<int16_t>
   };
 
   static inline Type populate(int16_t value);
+
+  static inline Type min(ParamType a, ParamType b);
+  static inline Type max(ParamType a, ParamType b);
 
   static inline Type abs(ParamType a);
   static inline Type mulSign(ParamType a, ParamType sign);
@@ -152,6 +167,30 @@ inline void AvxSimdIntType<int16_t>::setFromPackedUint8(SIMD<uint8_t, 16>::Param
   value = _mm256_cvtepu8_epi16(packed.value);
 }
 
+template<bool aligned>
+inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::loadAndConvert(const int8_t* p)
+{
+  return _mm256_cvtepi8_epi16(SseSimdIntType<int8_t>::load<aligned>(p));
+}
+
+template<bool aligned>
+inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::loadAndConvert(const uint8_t* p)
+{
+  return _mm256_cvtepu8_epi16(SseSimdIntType<uint8_t>::load<aligned>(p));
+}
+
+template<bool aligned>
+inline void AvxSimdIntType<int16_t>::convertAndStore(int8_t* p) const
+{
+  SseSimdIntType<int8_t>::fromNativeType(_mm256_castsi256_si128(_mm256_packs_epi16(value, _mm256_permute2x128_si256(value, value, 1)))).store<aligned>(p);
+}
+
+template<bool aligned>
+inline void AvxSimdIntType<int16_t>::convertAndStore(uint8_t* p) const
+{
+  SseSimdIntType<uint8_t>::fromNativeType(_mm256_castsi256_si128(_mm256_packus_epi16(value, _mm256_permute2x128_si256(value, value, 1)))).store<aligned>(p);
+}
+
 inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::onesComplement() const
 {
   return AvxSimdIntType<int16_t>::fromNativeType(_mm256_add_epi16(value, _mm256_cmpgt_epi16(_mm256_setzero_si256(), value)));
@@ -160,6 +199,16 @@ inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::onesComplement() const
 inline typename SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::populate(int16_t value)
 {
   return Type{_mm256_set1_epi16(value)};
+}
+
+inline SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::min(ParamType a, ParamType b)
+{
+  return Type{_mm256_min_epi16(a, b)};
+}
+
+inline SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::max(ParamType a, ParamType b)
+{
+  return Type{_mm256_max_epi16(a, b)};
 }
 
 inline SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::abs(ParamType a)
@@ -301,9 +350,24 @@ inline typename SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::interleaveEach4High(T
   return Type{_mm256_unpackhi_epi16(a, b)};
 }
 
+inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::zero()
+{
+  return ExtendedType{_mm256_setzero_si256(), _mm256_setzero_si256()};
+}
+
 inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::populate(int32_t value)
 {
   return ExtendedType{_mm256_set1_epi32(value), _mm256_set1_epi32(value)};
+}
+
+inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::min(ExtendedType a, ExtendedType b)
+{
+  return ExtendedType{_mm256_min_epi32(a.lo, b.lo), _mm256_min_epi32(a.hi, b.hi)};
+}
+
+inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::max(ExtendedType a, ExtendedType b)
+{
+  return ExtendedType{_mm256_max_epi32(a.lo, b.lo), _mm256_max_epi32(a.hi, b.hi)};
 }
 
 inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::operator+(const ExtendedType& other) const
