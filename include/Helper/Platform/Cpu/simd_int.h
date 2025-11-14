@@ -14,7 +14,7 @@ struct SimdIntType
 //    SimdIntType(SimdType v) : value(v) {}
   inline SimdIntType& operator=(SimdType v) { value = v; return *this; }
 
-  inline static Implementation fromNativeType(SimdType v) { Implementation x; x.value = v; return x; }
+  inline static Implementation fromNativeType(SimdType&& v) { return Implementation{std::move(v)}; }
 
   template<int i> inline Implementation& insert(T x);
   template<int i0, int i1, int ...i, typename ...Args> inline Implementation& insert(T x0, T x1, Args... x);

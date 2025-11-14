@@ -81,7 +81,7 @@ static inline void transposeSseInt16(__m128i& w0, __m128i& w1, __m128i& w2, __m1
 template<typename T>
 inline SseSimdIntType<T> SseSimdIntConditionType<T>::mask() const
 {
-  return SseSimdIntType<T>::fromNativeType(this->value);
+  return SseSimdIntType<T>{this->value};
 }
 
 template<typename T>

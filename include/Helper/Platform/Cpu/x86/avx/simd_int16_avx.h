@@ -60,8 +60,7 @@ struct SIMD<int16_t, 16> : public AvxIntSimd<int16_t>
     static inline ExtendedType zero();
     static inline ExtendedType populate(int32_t value);
 
-    static inline ExtendedType min(ExtendedType a, ExtendedType b);
-    static inline ExtendedType max(ExtendedType a, ExtendedType b);
+    inline void clamp(const ExtendedType& min, const ExtendedType& max);
 
     template <int fixedPointBits> Type descale() const;
     template <int fixedPointBits> Type round() const;
@@ -170,13 +169,13 @@ inline void AvxSimdIntType<int16_t>::setFromPackedUint8(SIMD<uint8_t, 16>::Param
 template<bool aligned>
 inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::loadAndConvert(const int8_t* p)
 {
-  return _mm256_cvtepi8_epi16(SseSimdIntType<int8_t>::load<aligned>(p));
+  return _mm256_cvtepi8_epi16(aligned ? _mm_load_si128((const __m128i*)p) : _mm_loadu_si128((const __m128i*)p));
 }
 
 template<bool aligned>
 inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::loadAndConvert(const uint8_t* p)
 {
-  return _mm256_cvtepu8_epi16(SseSimdIntType<uint8_t>::load<aligned>(p));
+  return _mm256_cvtepu8_epi16(aligned ? _mm_load_si128((const __m128i*)p) : _mm_loadu_si128((const __m128i*)p));
 }
 
 template<bool aligned>
@@ -360,14 +359,10 @@ inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::populate
   return ExtendedType{_mm256_set1_epi32(value), _mm256_set1_epi32(value)};
 }
 
-inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::min(ExtendedType a, ExtendedType b)
+inline void SIMD<int16_t, 16>::ExtendedType::clamp(const ExtendedType& min, const ExtendedType& max)
 {
-  return ExtendedType{_mm256_min_epi32(a.lo, b.lo), _mm256_min_epi32(a.hi, b.hi)};
-}
-
-inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::max(ExtendedType a, ExtendedType b)
-{
-  return ExtendedType{_mm256_max_epi32(a.lo, b.lo), _mm256_max_epi32(a.hi, b.hi)};
+  lo = _mm256_max_epi32(_mm256_min_epi32(lo, max.lo), min.lo);
+  hi = _mm256_max_epi32(_mm256_min_epi32(hi, max.hi), min.hi);
 }
 
 inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::operator+(const ExtendedType& other) const
@@ -377,7 +372,9 @@ inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::operator
 
 inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::operator+=(const ExtendedType& other)
 {
-  return *this = ExtendedType{_mm256_add_epi32(lo, other.lo), _mm256_add_epi32(hi, other.hi)};
+  lo = _mm256_add_epi32(lo, other.lo);
+  hi = _mm256_add_epi32(hi, other.hi);
+  return *this;
 }
 
 inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::ExtendedType::operator<<(int shift)

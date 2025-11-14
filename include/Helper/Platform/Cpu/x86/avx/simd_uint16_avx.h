@@ -31,12 +31,12 @@ struct SIMD<uint16_t, 16> : public AvxIntSimd<uint16_t>
 
 inline AvxSimdIntType<uint16_t> AvxSimdIntType<uint16_t>::operator+(const AvxSimdIntType<uint16_t>& other) const
 {
-  return AvxSimdIntType<uint16_t>::fromNativeType(_mm256_add_epi16(value, other.value));
+  return AvxSimdIntType<uint16_t>{_mm256_add_epi16(value, other.value)};
 }
 
 inline AvxSimdIntType<uint16_t> AvxSimdIntType<uint16_t>::operator-(const AvxSimdIntType<uint16_t>& other) const
 {
-  return AvxSimdIntType<uint16_t>::fromNativeType(_mm256_sub_epi16(value, other.value));
+  return AvxSimdIntType<uint16_t>{_mm256_sub_epi16(value, other.value)};
 }
 
 // SIMD<uint16_t, 16>

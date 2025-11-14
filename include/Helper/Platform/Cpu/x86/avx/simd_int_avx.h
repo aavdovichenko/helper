@@ -90,7 +90,7 @@ struct AvxIntSimd : public x86Simd<32>, public IntSimd<T, __m256i, __m256i>
 template<typename T>
 inline AvxSimdIntType<T> AvxSimdIntConditionType<T>::mask() const
 {
-  return AvxSimdIntType<T>::fromNativeType(this->value);
+  return AvxSimdIntType<T>{this->value};
 }
 
 template<typename T>
