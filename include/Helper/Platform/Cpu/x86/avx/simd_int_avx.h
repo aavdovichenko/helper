@@ -278,6 +278,95 @@ static inline void transposeAvxInt32(__m256i& w0, __m256i& w1, __m256i& w2, __m2
   w7 = _mm256_unpackhi_epi64(b5, b7); //
 }
 
+static inline void transposeAvxInt16(__m256i& w0, __m256i& w1, __m256i& w2, __m256i& w3, __m256i& w4, __m256i& w5, __m256i& w6, __m256i& w7,
+  __m256i& w8, __m256i& w9, __m256i& wA, __m256i& wB, __m256i& wC, __m256i& wD, __m256i& wE, __m256i& wF)
+{
+  // 00 01 02 03 04 05 06 07 | 08 09 0A 0B 0C 0D 0E 0F
+  // 10 11 12 13 14 15 16 17 | 18 19 1A 1B 1C 1D 1E 1F
+  // 20 21 22 23 24 25 26 27 | 28 29 2A 2B 2C 2D 2E 2F
+  // 30 31 32 33 34 35 36 37 | 38 39 3A 3B 3C 3D 3E 3F
+  // 40 41 42 43 44 45 46 47 | 48 49 4A 4B 4C 4D 4E 4F
+  // 50 51 52 53 54 55 56 57 | 58 59 5A 5B 5C 5D 5E 5F
+  // 60 61 62 63 64 65 66 67 | 68 69 6A 6B 6C 6D 6E 6F
+  // 70 71 72 73 74 75 76 77 | 78 79 7A 7B 7C 7D 7E 7F
+  // 80 81 82 83 84 85 86 87 | 88 89 8A 8B 8C 8D 8E 8F
+  // 90 91 92 93 94 95 96 97 | 98 99 9A 9B 9C 9D 9E 9F
+  // A0 A1 A2 A3 A4 A5 A6 A7 | A8 A9 AA AB AC AD AE AF
+  // B0 B1 B2 B3 B4 B5 B6 B7 | B8 B9 BA BB BC BD BE BF
+  // C0 C1 C2 C3 C4 C5 C6 C7 | C8 C9 CA CB CC CD CE CF
+  // D0 D1 D2 D3 D4 D5 D6 D7 | D8 D9 DA DB DC DD DE DF
+  // E0 E1 E2 E3 E4 E5 E6 E7 | E8 E9 EA EB EC ED EE EF
+  // F0 F1 F2 F3 F4 F5 F6 F7 | F8 F9 FA FB FC FD FE FF
+
+  __m256i x0 = _mm256_permute2x128_si256(w0, w8, 0x20); // 00 01 02 03 04 05 06 07 | 80 81 82 83 84 85 86 87
+  __m256i x1 = _mm256_permute2x128_si256(w1, w9, 0x20); // 10 11 12 13 14 15 16 17 | 90 91 92 93 94 95 96 97
+  __m256i x2 = _mm256_permute2x128_si256(w2, wA, 0x20); // 20 21 22 23 24 25 26 27 | A0 A1 A2 A3 A4 A5 A6 A7
+  __m256i x3 = _mm256_permute2x128_si256(w3, wB, 0x20); // 30 31 32 33 34 35 36 37 | B0 B1 B2 B3 B4 B5 B6 B7
+  __m256i x4 = _mm256_permute2x128_si256(w4, wC, 0x20); // 40 41 42 43 44 45 46 47 | C0 C1 C2 C3 C4 C5 C6 C7
+  __m256i x5 = _mm256_permute2x128_si256(w5, wD, 0x20); // 50 51 52 53 54 55 56 57 | D0 D1 D2 D3 D4 D5 D6 D7
+  __m256i x6 = _mm256_permute2x128_si256(w6, wE, 0x20); // 60 61 62 63 64 65 66 67 | E0 E1 E2 E3 E4 E5 E6 E7
+  __m256i x7 = _mm256_permute2x128_si256(w7, wF, 0x20); // 70 71 72 73 74 75 76 77 | F0 F1 F2 F3 F4 F5 F6 F7
+  __m256i x8 = _mm256_permute2x128_si256(w0, w8, 0x31); // 08 09 0A 0B 0C 0D 0E 0F | 88 89 8A 8B 8C 8D 8E 8F
+  __m256i x9 = _mm256_permute2x128_si256(w1, w9, 0x31); // 18 19 1A 1B 1C 1D 1E 1F | 98 99 9A 9B 9C 9D 9E 9F
+  __m256i xA = _mm256_permute2x128_si256(w2, wA, 0x31); // 28 29 2A 2B 2C 2D 2E 2F | A8 A9 AA AB AC AD AE AF
+  __m256i xB = _mm256_permute2x128_si256(w3, wB, 0x31); // 38 39 3A 3B 3C 3D 3E 3F | B8 B9 BA BB BC BD BE BF
+  __m256i xC = _mm256_permute2x128_si256(w4, wC, 0x31); // 48 49 4A 4B 4C 4D 4E 4F | C8 C9 CA CB CC CD CE CF
+  __m256i xD = _mm256_permute2x128_si256(w5, wD, 0x31); // 58 59 5A 5B 5C 5D 5E 5F | D8 D9 DA DB DC DD DE DF
+  __m256i xE = _mm256_permute2x128_si256(w6, wE, 0x31); // 68 69 6A 6B 6C 6D 6E 6F | E8 E9 EA EB EC ED EE EF
+  __m256i xF = _mm256_permute2x128_si256(w7, wF, 0x31); // 78 79 7A 7B 7C 7D 7E 7F | F8 F9 FA FB FC FD FE FF
+
+  __m256i y0 = _mm256_unpacklo_epi16(x0, x1); // 00 10 01 11 02 12 03 13 | ...
+  __m256i y1 = _mm256_unpackhi_epi16(x0, x1); // 04 14 05 15 06 16 07 17 |
+  __m256i y2 = _mm256_unpacklo_epi16(x2, x3); // 20 30 21 31 22 32 23 33 |
+  __m256i y3 = _mm256_unpackhi_epi16(x2, x3); // 24 34 25 35 26 36 27 37 |
+  __m256i y4 = _mm256_unpacklo_epi16(x4, x5); // 40 50 41 51 42 52 43 53 |
+  __m256i y5 = _mm256_unpackhi_epi16(x4, x5); // 44 54 45 55 46 56 47 57 |
+  __m256i y6 = _mm256_unpacklo_epi16(x6, x7); // 60 70 61 71 62 72 63 73 |
+  __m256i y7 = _mm256_unpackhi_epi16(x6, x7); // 64 74 65 75 66 76 67 77 |
+  __m256i y8 = _mm256_unpacklo_epi16(x8, x9); // ...
+  __m256i y9 = _mm256_unpackhi_epi16(x8, x9);
+  __m256i yA = _mm256_unpacklo_epi16(xA, xB);
+  __m256i yB = _mm256_unpackhi_epi16(xA, xB);
+  __m256i yC = _mm256_unpacklo_epi16(xC, xD);
+  __m256i yD = _mm256_unpackhi_epi16(xC, xD);
+  __m256i yE = _mm256_unpacklo_epi16(xE, xF);
+  __m256i yF = _mm256_unpackhi_epi16(xE, xF);
+
+  x0 = _mm256_unpacklo_epi32(y0, y2); // 00 10 20 30 01 11 21 31 |
+  x1 = _mm256_unpackhi_epi32(y0, y2); // 02 12 22 32 03 13 23 33 |
+  x2 = _mm256_unpacklo_epi32(y1, y3); // 04 14 24 34 05 15 25 35 |
+  x3 = _mm256_unpackhi_epi32(y1, y3); // 06 16 26 36 07 17 27 37 |
+  x4 = _mm256_unpacklo_epi32(y4, y6); // 40 50 60 70 41 51 61 71 |
+  x5 = _mm256_unpackhi_epi32(y4, y6); // 42 52 62 72 43 53 63 73 |
+  x6 = _mm256_unpacklo_epi32(y5, y7); // 44 54 64 74 45 55 65 75 |
+  x7 = _mm256_unpackhi_epi32(y5, y7); // 46 56 66 76 47 57 67 77 |
+  x8 = _mm256_unpacklo_epi32(y8, yA); // ...
+  x9 = _mm256_unpackhi_epi32(y8, yA); 
+  xA = _mm256_unpacklo_epi32(y9, yB); 
+  xB = _mm256_unpackhi_epi32(y9, yB); 
+  xC = _mm256_unpacklo_epi32(yC, yE); 
+  xD = _mm256_unpackhi_epi32(yC, yE); 
+  xE = _mm256_unpacklo_epi32(yD, yF); 
+  xF = _mm256_unpackhi_epi32(yD, yF); 
+
+  w0 = _mm256_unpacklo_epi64(x0, x4); // 00 10 20 30 40 50 60 70 |
+  w1 = _mm256_unpackhi_epi64(x0, x4); // 01 11 21 31 41 51 61 71 |
+  w2 = _mm256_unpacklo_epi64(x1, x5); // 02 12 22 32 42 52 62 72 |
+  w3 = _mm256_unpackhi_epi64(x1, x5); // 03 13 23 33 43 53 63 73 |
+  w4 = _mm256_unpacklo_epi64(x2, x6); // 04 14 24 34 44 54 64 74 |
+  w5 = _mm256_unpackhi_epi64(x2, x6); // 05 15 25 35 45 55 65 75 |
+  w6 = _mm256_unpacklo_epi64(x3, x7); // 06 16 26 36 46 56 66 76 |
+  w7 = _mm256_unpackhi_epi64(x3, x7); // 07 17 27 37 47 57 67 77 |
+  w8 = _mm256_unpacklo_epi64(x8, xC);
+  w9 = _mm256_unpackhi_epi64(x8, xC);
+  wA = _mm256_unpacklo_epi64(x9, xD);
+  wB = _mm256_unpackhi_epi64(x9, xD);
+  wC = _mm256_unpacklo_epi64(xA, xE);
+  wD = _mm256_unpackhi_epi64(xA, xE);
+  wE = _mm256_unpacklo_epi64(xB, xF);
+  wF = _mm256_unpackhi_epi64(xB, xF);
+}
+
 }
 
 }
