@@ -109,7 +109,7 @@ struct SIMD<int32_t, 8> : public AvxIntSimd<int32_t>
 
   static inline void transpose(Type& w0, Type& w1, Type& w2, Type& w3, Type& w4, Type& w5, Type& w6, Type& w7);
   template<int dstStride = 1>
-  static inline void transpose(Type* dst, ParamType w0, ParamType w1, ParamType w2, ParamType w3, ParamType w4, ParamType w5, ParamType w6, ParamType w7);
+  static inline void transpose(Type* dst, Type w0, Type w1, Type w2, Type w3, Type w4, Type w5, Type w6, Type w7);
   template<bool aligned, int dstStride = 1, int srcStride = 1>
   static inline void transpose(Type* dst, const int32_t* src);
   template<bool dstAligned, bool srcAligned>
@@ -321,7 +321,7 @@ inline void SIMD<int32_t, 8>::transpose(Type& w0, Type& w1, Type& w2, Type& w3, 
 }
 
 template<int dstStride>
-inline void SIMD<int32_t, 8>::transpose(Type* dst, ParamType m0, ParamType m1, ParamType m2, ParamType m3, ParamType m4, ParamType m5, ParamType m6, ParamType m7)
+inline void SIMD<int32_t, 8>::transpose(Type* dst, Type m0, Type m1, Type m2, Type m3, Type m4, Type m5, Type m6, Type m7)
 {
   transposeAvxInt32(m0.value, m1.value, m2.value, m3.value, m4.value, m5.value, m6.value, m7.value);
 
