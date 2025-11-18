@@ -20,6 +20,7 @@ list(APPEND HELPER_SOURCES
     include/Helper/Platform/Cpu/simd_int.h
     include/Helper/Platform/compiler.h
     include/Helper/Platform/os.h
+    include/Helper/FixedPoint.h
     include/Helper/ThreadPool.h
 )
 

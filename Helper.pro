@@ -38,6 +38,7 @@ HEADERS += \
     include/Helper/Platform/Cpu/simd_int.h \
     include/Helper/Platform/compiler.h \
     include/Helper/Platform/os.h \
+    include/Helper/FixedPoint.h \
     include/Helper/ThreadPool.h
 
 contains(QMAKE_HOST.arch, x86_64) | contains(QMAKE_HOST.arch, x86) {

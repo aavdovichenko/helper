@@ -51,6 +51,7 @@ struct SIMD<int16_t, 16> : public AvxIntSimd<int16_t>
 {
   typedef BaseAvxSimdIntType<int32_t, AvxSimdIntType<int32_t>> Int32Type;
 
+  typedef __m256i MulAddFactors;
   struct ExtendedType
   {
     typedef int32_t ItemType;
@@ -82,8 +83,10 @@ struct SIMD<int16_t, 16> : public AvxIntSimd<int16_t>
   static inline ExtendedType extend(ParamType value); // (int32)(value)
   static inline ExtendedType mulExtended(ParamType a, ParamType b); // (int32)(a*b)
   static inline ExtendedType mulExtended(ParamType a, int16_t factor); // (int32)(a*factor)
+  static inline MulAddFactors makeMulAddFactors(int16_t afactor, int16_t bfactor);
   static inline ExtendedType mulAdd(ParamType a, ParamType b, ParamType c, ParamType d); // (int32)(a*b + c*d)
-  static inline ExtendedType mulAdd(ParamType a, int16_t afactor, const ParamType b, int16_t bfactor); // (int32)(a*afactor + b*bfactor)
+  static inline ExtendedType mulAdd(ParamType a, int16_t afactor, ParamType b, int16_t bfactor); // (int32)(a*afactor + b*bfactor)
+  static inline ExtendedType mulAdd(ParamType a, ParamType b, MulAddFactors factors); // (int32)(a*factors.afactor + b*factors.bfactor)
   template <int16_t aFactorLo, int16_t aFactorHi, int16_t bFactorLo, int16_t bFactorHi>
   static inline ExtendedType mulAdd(ParamType a, ParamType b); // (int32)(a*{aFactorHi, aFactorLo} + b*{bFactorHi, bFactorLo})
   template <int16_t aFactor, int16_t bFactor>
@@ -246,6 +249,11 @@ inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::mulExtended(ParamType 
   return ExtendedType{_mm256_unpacklo_epi16(ablo, abhi), _mm256_unpackhi_epi16(ablo, abhi)};
 }
 
+inline SIMD<int16_t, 16>::MulAddFactors SIMD<int16_t, 16>::makeMulAddFactors(int16_t afactor, int16_t bfactor)
+{
+  return _mm256_unpacklo_epi16(_mm256_set1_epi16(afactor), _mm256_set1_epi16(bfactor));
+}
+
 inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::mulAdd(ParamType a, ParamType b, ParamType c, ParamType d)
 {
   __m256i aclo = _mm256_unpacklo_epi16(a.value, c.value);
@@ -259,6 +267,13 @@ inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::mulAdd(ParamType a, Pa
 inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::mulAdd(ParamType a, int16_t afactor, ParamType b, int16_t bfactor)
 {
   __m256i factor = _mm256_unpacklo_epi16(_mm256_set1_epi16(afactor), _mm256_set1_epi16(bfactor));
+  __m256i ablo = _mm256_unpacklo_epi16(a.value, b.value);
+  __m256i abhi = _mm256_unpackhi_epi16(a.value, b.value);
+  return ExtendedType{_mm256_madd_epi16(ablo, factor), _mm256_madd_epi16(abhi, factor)};
+}
+
+inline SIMD<int16_t, 16>::ExtendedType SIMD<int16_t, 16>::mulAdd(ParamType a, ParamType b, MulAddFactors factor)
+{
   __m256i ablo = _mm256_unpacklo_epi16(a.value, b.value);
   __m256i abhi = _mm256_unpackhi_epi16(a.value, b.value);
   return ExtendedType{_mm256_madd_epi16(ablo, factor), _mm256_madd_epi16(abhi, factor)};
