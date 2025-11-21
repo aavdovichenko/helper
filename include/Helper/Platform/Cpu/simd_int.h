@@ -27,6 +27,7 @@ struct SimdIntType
 template <typename T, typename SimdType, typename SimdConditionType>
 struct IntSimd
 {
+  typedef T ItemType;
   struct ConditionType
   {
     SimdConditionType value;

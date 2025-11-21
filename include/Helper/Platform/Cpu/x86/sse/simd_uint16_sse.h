@@ -16,11 +16,16 @@ struct SseSimdIntType<uint16_t> : public BaseSseSimdIntType<uint16_t, SseSimdInt
   using BaseSseSimdIntType<uint16_t, SseSimdIntType<uint16_t>>::BaseSseSimdIntType;
 
   static SseSimdIntType<uint16_t> populate(uint16_t value);
+
+  SseSimdIntType<uint16_t> operator+(const SseSimdIntType<uint16_t>& other) const;
+  SseSimdIntType<uint16_t> operator-(const SseSimdIntType<uint16_t>& other) const;
 };
 
 template<>
 struct SIMD<uint16_t, 8> : public SseIntSimd<uint16_t>
 {
+  static inline Type populate(uint16_t value);
+
   template<bool dstAligned, bool srcAligned>
   static inline void transpose(uint16_t* dst, size_t dstStride, const uint16_t* src, size_t srcStride);
 };
@@ -32,7 +37,22 @@ inline SseSimdIntType<uint16_t> SseSimdIntType<uint16_t>::populate(uint16_t valu
   return _mm_set1_epi16(value);
 }
 
+inline SseSimdIntType<uint16_t> SseSimdIntType<uint16_t>::operator+(const SseSimdIntType<uint16_t>& other) const
+{
+  return SseSimdIntType<uint16_t>{_mm_add_epi16(value, other.value)};
+}
+
+inline SseSimdIntType<uint16_t> SseSimdIntType<uint16_t>::operator-(const SseSimdIntType<uint16_t>& other) const
+{
+  return SseSimdIntType<uint16_t>{_mm_sub_epi16(value, other.value)};
+}
+
 // SIMD<uint16_t, 8>
+
+inline SseSimdIntType<uint16_t> SIMD<uint16_t, 8>::populate(uint16_t value)
+{
+  return SseSimdIntType<uint16_t>{_mm_set1_epi16(value)};
+}
 
 template<bool dstAligned, bool srcAligned>
 inline void SIMD<uint16_t, 8>::transpose(uint16_t* dst, size_t dstStride, const uint16_t* src, size_t srcStride)

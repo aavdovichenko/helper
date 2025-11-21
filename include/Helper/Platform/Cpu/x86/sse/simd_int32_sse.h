@@ -48,26 +48,33 @@ struct SseSimdIntType<int32_t> : public BaseSseSimdIntType<int32_t, SseSimdIntTy
   static inline SseSimdIntType<int32_t> fromPackedUint8(uint32_t packed);
   static inline SseSimdIntType<int32_t> fromPackedInt16(uint64_t packed);
   static inline SseSimdIntType<int32_t> fromPackedUint16(uint64_t packed);
+  static inline SseSimdIntType<int32_t> fromPackedUint24(const SseSimdIntType<int32_t>& packed);
   inline void setFromPackedUint8(uint32_t packed);
+
+  inline SseSimdIntType<int32_t> toPackedUint24() const;
 
   template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const int8_t* p);
   template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const uint8_t* p);
   template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const int16_t* p);
   template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const uint16_t* p);
-  template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const uint32_t* p);
 
   template<bool aligned> inline void convertAndStore(int8_t* p) const;
   template<bool aligned> inline void convertAndStore(uint8_t* p) const;
   template<bool aligned> inline void convertAndStore(int16_t* p) const;
   template<bool aligned> inline void convertAndStore(uint16_t* p) const;
-  template<bool aligned> inline void convertAndStore(uint32_t* p) const;
 #endif
+
+  template<bool aligned> static inline SseSimdIntType<int32_t> loadAndConvert(const uint32_t* p);
+  template<bool aligned> inline void convertAndStore(uint32_t* p) const;
 };
 
 template<>
 struct SIMD<int32_t, 4> : public SseIntSimd<int32_t>
 {
   static bool isSupported(SimdFeatures features = 0);
+
+  template<bool aligned> static inline Type loadAndConvert(const uint32_t* p);
+  template<bool aligned> static inline void convertAndStore(uint32_t* p, Type value);
 
   static inline Type populate(int value);
 
@@ -81,10 +88,13 @@ struct SIMD<int32_t, 4> : public SseIntSimd<int32_t>
   static inline Type mulSign(Type a, Type sign);
   static inline Type mulExtended(Type a, Type b, Type& abhi);
 
+  static inline void transpose(Type& w0, Type& w1, Type& w2, Type& w3);
   template<int dstStride = 1>
   static inline void transpose(Type* dst, Type w0, Type w1, Type w2, Type w3);
   template<bool aligned, int dstStride = 1, int srcStride = 1>
   static inline void transpose(Type* dst, const int32_t* src);
+  template<bool dstAligned, bool srcAligned>
+  static inline void transpose(int32_t* dst, size_t dstStride, const int32_t* src, size_t srcStride);
 
   static void extractByteComponents(ParamType a, uint32_t& c0, uint32_t& c1, uint32_t& c2, uint32_t& c3);
   static void extractByteComponents(ParamType a, ParamType b, uint64_t& c0, uint64_t& c1, uint64_t& c2, uint64_t& c3);
@@ -183,9 +193,19 @@ inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedUint16(uint64_
   return _mm_cvtepu16_epi32(_mm_set1_epi64x(packed));
 }
 
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedUint24(const SseSimdIntType<int32_t>& packed)
+{
+  return _mm_shuffle_epi8(packed, _mm_setr_epi8(0, 1, 2, -128, 3, 4, 5, -128, 6, 7, 8, -128, 9, 10, 11, -128));
+}
+
 inline void SseSimdIntType<int32_t>::setFromPackedUint8(uint32_t packed)
 {
   value = _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
+}
+
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::toPackedUint24() const
+{
+  return _mm_shuffle_epi8(value, _mm_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, -128, -128, -128, -128));
 }
 
 template<bool aligned>
@@ -213,12 +233,6 @@ inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::loadAndConvert(const uin
 }
 
 template<bool aligned>
-inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::loadAndConvert(const uint32_t* p)
-{
-  return load<aligned>((const int32_t*)p);
-}
-
-template<bool aligned>
 inline void SseSimdIntType<int32_t>::convertAndStore(int8_t* p) const
 {
   *(int32_t*)p = _mm_cvtsi128_si32(_mm_shuffle_epi8(value, _mm_setr_epi8(0, 4, 8, 12, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)));
@@ -241,13 +255,19 @@ inline void SseSimdIntType<int32_t>::convertAndStore(uint16_t* p) const
 {
   *(uint64_t*)p = _mm_cvtsi128_si64(_mm_packus_epi32(value, value));
 }
+#endif
+
+template<bool aligned>
+inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::loadAndConvert(const uint32_t* p)
+{
+  return load<aligned>((const int32_t*)p);
+}
 
 template<bool aligned>
 inline void SseSimdIntType<int32_t>::convertAndStore(uint32_t* p) const
 {
   store<aligned>((int32_t*)p);
 }
-#endif
 
 // SIMD<int32_t, 4>
 
@@ -258,6 +278,18 @@ inline bool SIMD<int32_t, 4>::isSupported(SimdFeatures features)
     return false;
 
   return SseIntSimd<int32_t>::isSupported(features);
+}
+
+template<bool aligned>
+inline typename SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::loadAndConvert(const uint32_t* p)
+{
+  return load<aligned>((int32_t*)p);
+}
+
+template<bool aligned>
+inline void SIMD<int32_t, 4>::convertAndStore(uint32_t* p, Type value)
+{
+  store<aligned>((int32_t*)p, value);
 }
 
 inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::populate(int32_t value)
@@ -297,6 +329,11 @@ inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::mulSign(Type a, Type sign)
   return Type{_mm_sign_epi32(a, sign)};
 }
 
+inline void SIMD<int32_t, 4>::transpose(Type& w0, Type& w1, Type& w2, Type& w3)
+{
+  transposeSseInt32(w0.value, w1.value, w2.value, w3.value);
+}
+
 inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::mulExtended(Type a, Type b, Type& abhi)
 {
   __m128i ab02 = _mm_mul_epi32(a, b);
@@ -308,18 +345,29 @@ inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::mulExtended(Type a, Type b, Type
 template<int dstStride>
 inline void SIMD<int32_t, 4>::transpose(Type* dst, Type w0, Type w1, Type w2, Type w3)
 {
-  __m128 v0 = _mm_castsi128_ps(w0), v1 = _mm_castsi128_ps(w1), v2 = _mm_castsi128_ps(w2), v3 = _mm_castsi128_ps(w3);
-  _MM_TRANSPOSE4_PS(v0, v1, v2, v3);
-  dst[0 * dstStride] = _mm_castps_si128(v0);
-  dst[1 * dstStride] = _mm_castps_si128(v1);
-  dst[2 * dstStride] = _mm_castps_si128(v2);
-  dst[3 * dstStride] = _mm_castps_si128(v3);
+  transposeSseInt32(w0.value, w1.value, w2.value, w3.value);
+  dst[0 * dstStride] = w0;
+  dst[1 * dstStride] = w1;
+  dst[2 * dstStride] = w2;
+  dst[3 * dstStride] = w3;
 }
 
 template<bool aligned, int dstStride, int srcStride>
 inline void SIMD<int32_t, 4>::transpose(Type* dst, const int32_t* src)
 {
   transpose<dstStride>(dst, load<aligned>(src + 0 * 4 * srcStride), load<aligned>(src + 1 * 4 * srcStride), load<aligned>(src + 2 * 4 * srcStride), load<aligned>(src + 3 * 4 * srcStride));
+}
+
+template<bool dstAligned, bool srcAligned>
+inline void SIMD<int32_t, 4>::transpose(int32_t* dst, size_t dstStride, const int32_t* src, size_t srcStride)
+{
+  Type w0 = load<srcAligned>(src + 0 * srcStride), w1 = load<srcAligned>(src + 1 * srcStride);
+  Type w2 = load<srcAligned>(src + 2 * srcStride), w3 = load<srcAligned>(src + 3 * srcStride);
+
+  transposeSseInt32(w0.value, w1.value, w2.value, w3.value);
+
+  w0.store<dstAligned>(dst + 0 * dstStride); w1.store<dstAligned>(dst + 1 * dstStride);
+  w2.store<dstAligned>(dst + 2 * dstStride); w3.store<dstAligned>(dst + 3 * dstStride);
 }
 
 inline void SIMD<int32_t, 4>::extractByteComponents(ParamType a, uint32_t& c0, uint32_t& c1, uint32_t& c2, uint32_t& c3)

@@ -63,6 +63,9 @@ struct SIMD<int32_t, 8> : public AvxIntSimd<int32_t>
 {
   static bool isSupported(SimdFeatures features = 0);
 
+  template<bool aligned> static inline Type loadAndConvert(const uint32_t* p);
+  template<bool aligned> static inline void convertAndStore(uint32_t* p, Type value);
+
   static inline Type populate(int32_t value)
   {
     return Type{_mm256_set1_epi32(value)};
@@ -288,6 +291,18 @@ inline bool SIMD<int32_t, 8>::isSupported(SimdFeatures features)
     return false;
 
   return AvxIntSimd<int32_t>::isSupported(features);
+}
+
+template<bool aligned>
+inline typename SIMD<int32_t, 8>::Type SIMD<int32_t, 8>::loadAndConvert(const uint32_t* p)
+{
+  return load<aligned>((int32_t*)p);
+}
+
+template<bool aligned>
+inline void SIMD<int32_t, 8>::convertAndStore(uint32_t* p, Type value)
+{
+  store<aligned>((int32_t*)p, value);
 }
 
 inline SIMD<int32_t, 8>::Type SIMD<int32_t, 8>::abs(Type a)

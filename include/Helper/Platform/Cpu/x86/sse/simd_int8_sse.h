@@ -27,6 +27,9 @@ struct SseSimdIntType<int8_t> : public BaseSseSimdIntType<int8_t, SseSimdIntType
 template<>
 struct SIMD<int8_t, 16> : public SseIntSimd<int8_t>
 {
+  template<bool dstAligned, bool srcAligned>
+  static inline void transpose(int8_t* dst, size_t dstStride, const int8_t* src, size_t srcStride);
+
   template<int dstStride = 1>
   static inline void transpose2x8x8(Type* dst, Type w0, Type w1, Type w2, Type w3, Type w4, Type w5, Type w6, Type w7);
 };
@@ -55,6 +58,30 @@ inline SseSimdIntType<int8_t>& SseSimdIntType<int8_t>::operator+=(SseSimdIntType
 inline SseSimdIntConditionType<int8_t> SseSimdIntType<int8_t>::operator==(const SseSimdIntType<int8_t>& other) const
 {
   return SseSimdIntConditionType<int8_t>::fromNativeType(_mm_cmpeq_epi8(value, other.value));
+}
+
+template<bool dstAligned, bool srcAligned>
+inline void SIMD<int8_t, 16>::transpose(int8_t* dst, size_t dstStride, const int8_t* src, size_t srcStride)
+{
+  Type w0 = load<srcAligned>(src + 0 * srcStride), w1 = load<srcAligned>(src + 1 * srcStride);
+  Type w2 = load<srcAligned>(src + 2 * srcStride), w3 = load<srcAligned>(src + 3 * srcStride);
+  Type w4 = load<srcAligned>(src + 4 * srcStride), w5 = load<srcAligned>(src + 5 * srcStride);
+  Type w6 = load<srcAligned>(src + 6 * srcStride), w7 = load<srcAligned>(src + 7 * srcStride);
+  Type w8 = load<srcAligned>(src + 8 * srcStride), w9 = load<srcAligned>(src + 9 * srcStride);
+  Type wA = load<srcAligned>(src + 10 * srcStride), wB = load<srcAligned>(src + 11 * srcStride);
+  Type wC = load<srcAligned>(src + 12 * srcStride), wD = load<srcAligned>(src + 13 * srcStride);
+  Type wE = load<srcAligned>(src + 14 * srcStride), wF = load<srcAligned>(src + 15 * srcStride);
+
+  transposeSseInt8(w0.value, w1.value, w2.value, w3.value, w4.value, w5.value, w6.value, w7.value, w8.value, w9.value, wA.value, wB.value, wC.value, wD.value, wE.value, wF.value);
+
+  w0.store<dstAligned>(dst + 0 * dstStride); w1.store<dstAligned>(dst + 1 * dstStride);
+  w2.store<dstAligned>(dst + 2 * dstStride); w3.store<dstAligned>(dst + 3 * dstStride);
+  w4.store<dstAligned>(dst + 4 * dstStride); w5.store<dstAligned>(dst + 5 * dstStride);
+  w6.store<dstAligned>(dst + 6 * dstStride); w7.store<dstAligned>(dst + 7 * dstStride);
+  w8.store<dstAligned>(dst + 8 * dstStride); w9.store<dstAligned>(dst + 9 * dstStride);
+  wA.store<dstAligned>(dst + 10 * dstStride); wB.store<dstAligned>(dst + 11 * dstStride);
+  wC.store<dstAligned>(dst + 12 * dstStride); wD.store<dstAligned>(dst + 13 * dstStride);
+  wE.store<dstAligned>(dst + 14 * dstStride); wF.store<dstAligned>(dst + 15 * dstStride);
 }
 
 template<int dstStride>

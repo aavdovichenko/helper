@@ -29,6 +29,9 @@ struct SIMD<int8_t, 32> : public AvxIntSimd<int8_t>
 {
   static AvxSimdIntType<int8_t> populate(int8_t value);
 
+  template<bool dstAligned, bool srcAligned>
+  static inline void transpose(int8_t* dst, size_t dstStride, const int8_t* src, size_t srcStride);
+
   template<int dstStride = 1>
   static inline void transpose4x8x8(Type* dst, Type w0, Type w1, Type w2, Type w3, Type w4, Type w5, Type w6, Type w7);
 };
@@ -62,6 +65,47 @@ inline AvxSimdIntConditionType<int8_t> AvxSimdIntType<int8_t>::operator==(const 
 inline AvxSimdIntType<int8_t> SIMD<int8_t, 32>::populate(int8_t value)
 {
   return AvxSimdIntType<int8_t>{_mm256_set1_epi8(value)};
+}
+
+template<bool dstAligned, bool srcAligned>
+inline void SIMD<int8_t, 32>::transpose(int8_t* dst, size_t dstStride, const int8_t* src, size_t srcStride)
+{
+  Type w0 = load<srcAligned>(src + 0 * srcStride), w1 = load<srcAligned>(src + 1 * srcStride);
+  Type w2 = load<srcAligned>(src + 2 * srcStride), w3 = load<srcAligned>(src + 3 * srcStride);
+  Type w4 = load<srcAligned>(src + 4 * srcStride), w5 = load<srcAligned>(src + 5 * srcStride);
+  Type w6 = load<srcAligned>(src + 6 * srcStride), w7 = load<srcAligned>(src + 7 * srcStride);
+  Type w8 = load<srcAligned>(src + 8 * srcStride), w9 = load<srcAligned>(src + 9 * srcStride);
+  Type wA = load<srcAligned>(src + 10 * srcStride), wB = load<srcAligned>(src + 11 * srcStride);
+  Type wC = load<srcAligned>(src + 12 * srcStride), wD = load<srcAligned>(src + 13 * srcStride);
+  Type wE = load<srcAligned>(src + 14 * srcStride), wF = load<srcAligned>(src + 15 * srcStride);
+  Type wG = load<srcAligned>(src + 16 * srcStride), wH = load<srcAligned>(src + 17 * srcStride);
+  Type wI = load<srcAligned>(src + 18 * srcStride), wJ = load<srcAligned>(src + 19 * srcStride);
+  Type wK = load<srcAligned>(src + 20 * srcStride), wL = load<srcAligned>(src + 21 * srcStride);
+  Type wM = load<srcAligned>(src + 22 * srcStride), wN = load<srcAligned>(src + 23 * srcStride);
+  Type wO = load<srcAligned>(src + 24 * srcStride), wP = load<srcAligned>(src + 25 * srcStride);
+  Type wQ = load<srcAligned>(src + 26 * srcStride), wR = load<srcAligned>(src + 27 * srcStride);
+  Type wS = load<srcAligned>(src + 28 * srcStride), wT = load<srcAligned>(src + 29 * srcStride);
+  Type wU = load<srcAligned>(src + 30 * srcStride), wV = load<srcAligned>(src + 31 * srcStride);
+
+  transposeAvxInt8(w0.value, w1.value, w2.value, w3.value, w4.value, w5.value, w6.value, w7.value, w8.value, w9.value, wA.value, wB.value, wC.value, wD.value, wE.value, wF.value,
+    wG.value, wH.value, wI.value, wJ.value, wK.value, wL.value, wM.value, wN.value, wO.value, wP.value, wQ.value, wR.value, wS.value, wT.value, wU.value, wV.value);
+
+  w0.store<dstAligned>(dst + 0 * dstStride); w1.store<dstAligned>(dst + 1 * dstStride);
+  w2.store<dstAligned>(dst + 2 * dstStride); w3.store<dstAligned>(dst + 3 * dstStride);
+  w4.store<dstAligned>(dst + 4 * dstStride); w5.store<dstAligned>(dst + 5 * dstStride);
+  w6.store<dstAligned>(dst + 6 * dstStride); w7.store<dstAligned>(dst + 7 * dstStride);
+  w8.store<dstAligned>(dst + 8 * dstStride); w9.store<dstAligned>(dst + 9 * dstStride);
+  wA.store<dstAligned>(dst + 10 * dstStride); wB.store<dstAligned>(dst + 11 * dstStride);
+  wC.store<dstAligned>(dst + 12 * dstStride); wD.store<dstAligned>(dst + 13 * dstStride);
+  wE.store<dstAligned>(dst + 14 * dstStride); wF.store<dstAligned>(dst + 15 * dstStride);
+  wG.store<dstAligned>(dst + 16 * dstStride); wH.store<dstAligned>(dst + 17 * dstStride);
+  wI.store<dstAligned>(dst + 18 * dstStride); wJ.store<dstAligned>(dst + 19 * dstStride);
+  wK.store<dstAligned>(dst + 20 * dstStride); wL.store<dstAligned>(dst + 21 * dstStride);
+  wM.store<dstAligned>(dst + 22 * dstStride); wN.store<dstAligned>(dst + 23 * dstStride);
+  wO.store<dstAligned>(dst + 24 * dstStride); wP.store<dstAligned>(dst + 25 * dstStride);
+  wQ.store<dstAligned>(dst + 26 * dstStride); wR.store<dstAligned>(dst + 27 * dstStride);
+  wS.store<dstAligned>(dst + 28 * dstStride); wT.store<dstAligned>(dst + 29 * dstStride);
+  wU.store<dstAligned>(dst + 30 * dstStride); wV.store<dstAligned>(dst + 31 * dstStride);
 }
 
 template<int dstStride>

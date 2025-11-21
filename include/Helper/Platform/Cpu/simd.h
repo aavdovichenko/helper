@@ -151,6 +151,7 @@ struct SIMD<T, 1> : public GenericSimd
   typedef T ParamType;
   typedef bool ConditionType;
   typedef typename GenericExtendedIntegerType<T>::Type ExtendedType;
+  typedef typename GenericExtendedIntegerType<T>::Type ExtendedItemType;
 
   static inline constexpr bool isSupported(SimdFeatures features);
 
@@ -179,11 +180,16 @@ struct SIMD<T, 1> : public GenericSimd
   template <bool aligned> static inline Type load(const T* src);
   static inline Type load(const T* src);
   static inline Type loadUnaligned(const T* src);
+  template <bool aligned> static inline void store(T* dst, Type value);
   static inline void store(T* dst, Type value);
   static inline void storeUnaligned(T* dst, Type value);
 
-  static inline T reductionSum(Type value);
+  template <bool aligned, typename T2>
+  static inline T loadAndConvert(const T2* p);
+  template <bool aligned, typename T2>
+  static inline void convertAndStore(T2* p, T value);
 
+  static inline T reductionSum(Type value);
 
   template<bool aligned, int dstStride = 1, int srcStride = 1>
   static inline void transpose(Type* dst, const Type* src);
@@ -734,6 +740,12 @@ inline typename SIMD<T, 1>::Type SIMD<T, 1>::loadUnaligned(const T* src)
   return *src;
 }
 
+template<typename T> template<bool aligned>
+inline void SIMD<T, 1>::store(T* dst, Type value)
+{
+  *dst = value;
+}
+
 template<typename T>
 inline void SIMD<T, 1>::store(T* dst, Type value)
 {
@@ -745,6 +757,19 @@ inline void SIMD<T, 1>::storeUnaligned(T* dst, Type value)
 {
   *dst = value;
 }
+
+template<typename T> template<bool aligned, typename T2>
+inline T SIMD<T, 1>::loadAndConvert(const T2* p)
+{
+  return (T)*p;
+}
+
+template<typename T> template<bool aligned, typename T2>
+inline void SIMD<T, 1>::convertAndStore(T2* p, T value)
+{
+  *p = (T2)value;
+}
+
 
 template<typename T>
 inline T SIMD<T, 1>::reductionSum(Type value)

@@ -39,6 +39,12 @@ struct SseSimdIntType<int16_t> : public BaseSseSimdIntType<int16_t, SseSimdIntTy
 #ifdef PLATFORM_CPU_FEATURE_SSE41
   static inline SseSimdIntType<int16_t> fromPackedUint8(uint64_t packed);
   inline void setFromPackedUint8(uint64_t packed);
+
+  template<bool aligned> static inline SseSimdIntType<int16_t> loadAndConvert(const int8_t* p);
+  template<bool aligned> static inline SseSimdIntType<int16_t> loadAndConvert(const uint8_t* p);
+
+  template<bool aligned> inline void convertAndStore(int8_t* p) const;
+  template<bool aligned> inline void convertAndStore(uint8_t* p) const;
 #endif
   inline SseSimdIntType<int16_t> onesComplement() const;
 };
@@ -47,12 +53,18 @@ template<>
 struct SIMD<int16_t, 8> : public SseIntSimd<int16_t>
 {
   typedef SseSimdIntType<int8_t> Int8Type;
+  typedef __m128i MulAddFactors;
 
   struct ExtendedType
   {
+    typedef int32_t ItemType;
+
     __m128i lo, hi;
 
-    static ExtendedType populate(int32_t value);
+    static inline ExtendedType zero();
+    static inline ExtendedType populate(int32_t value);
+
+    inline void clamp(const ExtendedType& min, const ExtendedType& max);
 
     template <int fixedPointBits> Type descale() const;
     template <int fixedPointBits> Type round() const;
@@ -61,6 +73,14 @@ struct SIMD<int16_t, 8> : public SseIntSimd<int16_t>
     ExtendedType operator+=(ExtendedType other);
     ExtendedType operator<<(int shift);
   };
+  typedef ExtendedType::ItemType ExtendedItemType;
+
+#ifdef PLATFORM_CPU_FEATURE_SSE41
+  template<bool aligned> static inline Type loadAndConvert(const int8_t* p);
+  template<bool aligned> static inline Type loadAndConvert(const uint8_t* p);
+  template<bool aligned> static inline void convertAndStore(int8_t* p, ParamType value);
+  template<bool aligned> static inline void convertAndStore(uint8_t* p, ParamType value);
+#endif
 
   static inline Type populate(int value);
 
@@ -76,8 +96,10 @@ struct SIMD<int16_t, 8> : public SseIntSimd<int16_t>
   static inline ExtendedType extend(ParamType value); // (int32)(value)
   static inline ExtendedType mulExtended(Type a, Type b); // (int32)(a*b)
   static inline ExtendedType mulExtended(Type a, int16_t factor); // (int32)(a*factor)
+  static inline MulAddFactors makeMulAddFactors(int16_t afactor, int16_t bfactor);
   static inline ExtendedType mulAdd(Type a, Type b, Type c, Type d); // (int32)(a*b + c*d)
   static inline ExtendedType mulAdd(Type a, int16_t afactor, Type b, int16_t bfactor); // (int32)(a*afactor + b*bfactor)
+  static inline ExtendedType mulAdd(ParamType a, ParamType b, const MulAddFactors& factors); // (int32)(a*factors.afactor + b*factors.bfactor)
   template <int16_t aFactor, int16_t bFactor>
   static inline ExtendedType mulAdd(ParamType a, ParamType b); // (int32)(a*aFactor + b*bFactor)
 
@@ -150,6 +172,30 @@ inline void SseSimdIntType<int16_t>::setFromPackedUint8(uint64_t packed)
 {
   value = _mm_cvtepu8_epi16(_mm_set1_epi64x(packed));
 }
+
+template<bool aligned>
+inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::loadAndConvert(const int8_t* p)
+{
+  return _mm_cvtepi8_epi16(_mm_set1_epi64x(*(const int64_t*)p));
+}
+
+template<bool aligned>
+inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::loadAndConvert(const uint8_t* p)
+{
+  return _mm_cvtepu8_epi16(_mm_set1_epi64x(*(const int64_t*)p));
+}
+
+template<bool aligned>
+inline void SseSimdIntType<int16_t>::convertAndStore(int8_t* p) const
+{
+  *(int64_t*)p = _mm_extract_epi64(_mm_packs_epi16(value, value), 0);
+}
+
+template<bool aligned>
+inline void SseSimdIntType<int16_t>::convertAndStore(uint8_t* p) const
+{
+  *(int64_t*)p = _mm_extract_epi64(_mm_packus_epi16(value, value), 0);
+}
 #endif
 
 inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::onesComplement() const
@@ -199,6 +245,34 @@ inline SseSimdIntType<int16_t>& SimdIntType<int16_t, __m128i, SseSimdIntType<int
   value = _mm_insert_epi16(value, x, i);
   return *static_cast<SseSimdIntType<int16_t>*>(this);
 }
+
+// SIMD<int16_t, 16>
+
+#ifdef PLATFORM_CPU_FEATURE_SSE41
+template<bool aligned>
+inline typename SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::loadAndConvert(const int8_t* p)
+{
+  return _mm_cvtepi8_epi16(_mm_set1_epi64x(*(const int64_t*)p));
+}
+
+template<bool aligned>
+inline typename SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::loadAndConvert(const uint8_t* p)
+{
+  return _mm_cvtepu8_epi16(_mm_set1_epi64x(*(const int64_t*)p));
+}
+
+template<bool aligned>
+inline void SIMD<int16_t, 8>::convertAndStore(int8_t* p, ParamType value)
+{
+  *(int64_t*)p = _mm_extract_epi64(_mm_packs_epi16(value, value), 0);
+}
+
+template<bool aligned>
+inline void SIMD<int16_t, 8>::convertAndStore(uint8_t* p, ParamType value)
+{
+  *(int64_t*)p = _mm_extract_epi64(_mm_packus_epi16(value, value), 0);
+}
+#endif
 
 inline SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::populate(int value)
 {
@@ -254,6 +328,11 @@ inline SIMD<int16_t, 8>::ExtendedType SIMD<int16_t, 8>::mulExtended(Type a, int1
   return ExtendedType{_mm_unpacklo_epi16(ablo, abhi), _mm_unpackhi_epi16(ablo, abhi)};
 }
 
+inline SIMD<int16_t, 8>::MulAddFactors SIMD<int16_t, 8>::makeMulAddFactors(int16_t afactor, int16_t bfactor)
+{
+  return _mm_unpacklo_epi16(_mm_set1_epi16(afactor), _mm_set1_epi16(bfactor));
+}
+
 inline SIMD<int16_t, 8>::ExtendedType SIMD<int16_t, 8>::mulAdd(Type a, Type b, Type c, Type d)
 {
   __m128i aclo = _mm_unpacklo_epi16(a, c);
@@ -267,6 +346,13 @@ inline SIMD<int16_t, 8>::ExtendedType SIMD<int16_t, 8>::mulAdd(Type a, Type b, T
 inline SIMD<int16_t, 8>::ExtendedType SIMD<int16_t, 8>::mulAdd(Type a, int16_t afactor, Type b, int16_t bfactor)
 {
   __m128i factor = _mm_unpacklo_epi16(_mm_set1_epi16(afactor), _mm_set1_epi16(bfactor));
+  __m128i ablo = _mm_unpacklo_epi16(a, b);
+  __m128i abhi = _mm_unpackhi_epi16(a, b);
+  return ExtendedType{_mm_madd_epi16(ablo, factor), _mm_madd_epi16(abhi, factor)};
+}
+
+inline SIMD<int16_t, 8>::ExtendedType SIMD<int16_t, 8>::mulAdd(ParamType a, ParamType b, const MulAddFactors& factor)
+{
   __m128i ablo = _mm_unpacklo_epi16(a, b);
   __m128i abhi = _mm_unpackhi_epi16(a, b);
   return ExtendedType{_mm_madd_epi16(ablo, factor), _mm_madd_epi16(abhi, factor)};
@@ -338,9 +424,27 @@ inline void SIMD<int16_t, 8>::transpose(int16_t* dst, size_t dstStride, const in
   w6.store<dstAligned>(dst + 6 * dstStride); w7.store<dstAligned>(dst + 7 * dstStride);
 }
 
+inline SIMD<int16_t, 8>::ExtendedType SIMD<int16_t, 8>::ExtendedType::zero()
+{
+  return ExtendedType{_mm_setzero_si128(), _mm_setzero_si128()};
+}
+
 inline SIMD<int16_t, 8>::ExtendedType SIMD<int16_t, 8>::ExtendedType::populate(int32_t value)
 {
   return ExtendedType{_mm_set1_epi32(value), _mm_set1_epi32(value)};
+}
+
+inline void SIMD<int16_t, 8>::ExtendedType::clamp(const ExtendedType& min, const ExtendedType& max)
+{
+  __m128i cmp = _mm_cmplt_epi32(lo, max.lo);
+  lo = _mm_add_epi32(_mm_and_si128(cmp, lo), _mm_andnot_si128(cmp, max.lo));
+  cmp = _mm_cmpgt_epi32(lo, min.lo);
+  lo = _mm_add_epi32(_mm_and_si128(cmp, lo), _mm_andnot_si128(cmp, min.lo));
+
+  cmp = _mm_cmplt_epi32(hi, max.hi);
+  hi = _mm_add_epi32(_mm_and_si128(cmp, hi), _mm_andnot_si128(cmp, max.hi));
+  cmp = _mm_cmpgt_epi32(hi, min.hi);
+  hi = _mm_add_epi32(_mm_and_si128(cmp, hi), _mm_andnot_si128(cmp, min.hi));
 }
 
 inline SIMD<int16_t, 8>::ExtendedType SIMD<int16_t, 8>::ExtendedType::operator+(ExtendedType other) const
