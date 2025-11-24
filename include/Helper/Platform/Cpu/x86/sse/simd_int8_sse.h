@@ -27,12 +27,16 @@ struct SseSimdIntType<int8_t> : public BaseSseSimdIntType<int8_t, SseSimdIntType
 template<>
 struct SIMD<int8_t, 16> : public SseIntSimd<int8_t>
 {
+  static SseSimdIntType<int8_t> populate(int8_t value);
+
   template<bool dstAligned, bool srcAligned>
   static inline void transpose(int8_t* dst, size_t dstStride, const int8_t* src, size_t srcStride);
 
   template<int dstStride = 1>
   static inline void transpose2x8x8(Type* dst, Type w0, Type w1, Type w2, Type w3, Type w4, Type w5, Type w6, Type w7);
 };
+
+// SseSimdIntType<int8_t>
 
 inline SseSimdIntType<int8_t> SseSimdIntType<int8_t>::populate(int8_t value)
 {
@@ -58,6 +62,13 @@ inline SseSimdIntType<int8_t>& SseSimdIntType<int8_t>::operator+=(SseSimdIntType
 inline SseSimdIntConditionType<int8_t> SseSimdIntType<int8_t>::operator==(const SseSimdIntType<int8_t>& other) const
 {
   return SseSimdIntConditionType<int8_t>::fromNativeType(_mm_cmpeq_epi8(value, other.value));
+}
+
+// SIMD<int8_t, 16>
+
+inline SseSimdIntType<int8_t> SIMD<int8_t, 16>::populate(int8_t value)
+{
+  return _mm_set1_epi8(value);
 }
 
 template<bool dstAligned, bool srcAligned>
