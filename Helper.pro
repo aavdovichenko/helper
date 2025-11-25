@@ -23,9 +23,6 @@ linux-g++* : QMAKE_CXXFLAGS += -Werror
 
 INCLUDEPATH += include
 
-SOURCES += \
-    src/ThreadPool.cpp
-
 HEADERS += \
     include/Helper/Platform/Cpu/emulated/math_emulated.h \
     include/Helper/Platform/Cpu/emulated/rounding_emulated.h \

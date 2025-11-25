@@ -2,13 +2,8 @@ project(helper CXX)
 
 include_directories("${helper_SOURCE_DIR}/include")
 
-# sources
-set(HELPER_SOURCES 
-    src/ThreadPool.cpp
-)
-
 # interface headers
-list(APPEND HELPER_SOURCES
+set(HELPER_SOURCES
     include/Helper/Platform/Cpu/emulated/math_emulated.h
     include/Helper/Platform/Cpu/emulated/rounding_emulated.h
     include/Helper/Platform/Cpu/cpu.h
@@ -54,4 +49,4 @@ list(APPEND HELPER_SOURCES
     include/Helper/Platform/Cpu/x86/x86.h
 )
 
-add_library(helper STATIC ${HELPER_SOURCES})
+add_library(helper INTERFACE)
