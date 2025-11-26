@@ -43,7 +43,11 @@ template<int i>
 inline int64_t SseSimdIntType<int64_t>::get() const
 {
   static_assert(i == 0 || i == 1, "invalid index");
+#ifdef PLATFORM_CPU_X86_64
   return i == 0 ? _mm_cvtsi128_si64(value) : _mm_extract_epi64(value, 1);
+#else
+  return (((int64_t)_mm_extract_epi32(value, i * 2 + 1) << 32) | _mm_extract_epi32(value, i * 2));
+#endif
 }
 
 template<int i0, int i1>

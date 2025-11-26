@@ -399,10 +399,17 @@ inline void SIMD<int32_t, 4>::extractByteComponents(ParamType w0, ParamType w1, 
   c = _mm_unpacklo_epi8(a, b); // 00 01 02 03 04 05 06 07 10 11 12 13 14 15 16 17
   d = _mm_unpackhi_epi8(a, b); // 20 21 22 23 24 25 26 27 30 31 32 33 34 35 36 37
 
+#ifdef PLATFORM_CPU_X86_64
   c0 = _mm_extract_epi64(c, 0);
   c1 = _mm_extract_epi64(c, 1);
   c2 = _mm_extract_epi64(d, 0);
   c3 = _mm_extract_epi64(d, 1);
+#else
+  c0 = ((uint64_t)_mm_extract_epi32(c, 1) << 32) | _mm_extract_epi32(c, 0);
+  c1 = ((uint64_t)_mm_extract_epi32(c, 3) << 32) | _mm_extract_epi32(c, 2);
+  c2 = ((uint64_t)_mm_extract_epi32(d, 1) << 32) | _mm_extract_epi32(d, 0);
+  c3 = ((uint64_t)_mm_extract_epi32(d, 3) << 32) | _mm_extract_epi32(d, 2);
+#endif
 }
 
 inline SIMD<int32_t, 4>::Type SIMD<int32_t, 4>::interleaveLow16Bit(Type a, Type b)

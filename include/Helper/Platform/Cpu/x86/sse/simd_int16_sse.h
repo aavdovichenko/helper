@@ -188,13 +188,13 @@ inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::loadAndConvert(const uin
 template<bool aligned>
 inline void SseSimdIntType<int16_t>::convertAndStore(int8_t* p) const
 {
-  *(int64_t*)p = _mm_extract_epi64(_mm_packs_epi16(value, value), 0);
+  _mm_storeu_si64(p, _mm_packs_epi16(value, value));
 }
 
 template<bool aligned>
 inline void SseSimdIntType<int16_t>::convertAndStore(uint8_t* p) const
 {
-  *(int64_t*)p = _mm_extract_epi64(_mm_packus_epi16(value, value), 0);
+  _mm_storeu_si64(p, _mm_packus_epi16(value, value));
 }
 #endif
 
@@ -264,13 +264,13 @@ inline typename SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::loadAndConvert(const ui
 template<bool aligned>
 inline void SIMD<int16_t, 8>::convertAndStore(int8_t* p, ParamType value)
 {
-  *(int64_t*)p = _mm_extract_epi64(_mm_packs_epi16(value, value), 0);
+  _mm_storeu_si64(p, _mm_packs_epi16(value, value));
 }
 
 template<bool aligned>
 inline void SIMD<int16_t, 8>::convertAndStore(uint8_t* p, ParamType value)
 {
-  *(int64_t*)p = _mm_extract_epi64(_mm_packus_epi16(value, value), 0);
+  _mm_storeu_si64(p, _mm_packus_epi16(value, value));
 }
 #endif
 
