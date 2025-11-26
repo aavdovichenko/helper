@@ -7,6 +7,10 @@
 #include "../../simd_int.h"
 #include "../simd_x86.h"
 
+#if defined(__GNUC__) && __GNUC__ < 9
+#define _mm_storeu_si64(p, a) (_mm_storel_epi64((__m128i*)(p), (a)))
+#endif
+
 namespace Platform
 {
 
