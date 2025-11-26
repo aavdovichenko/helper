@@ -929,4 +929,26 @@ struct SimdDetector<int64_t>
 
 }
 
+#ifdef PLATFORM_CPU_X86
+static inline void* aligned_alloc(size_t alignment, size_t size)
+{
+  return _mm_malloc(size, alignment);
+}
+
+static inline void aligned_free(void* p)
+{
+  return _mm_free(p);
+}
+#else
+static inline void* aligned_alloc(size_t alignment, size_t size)
+{
+  return std::aligned_alloc(size, alignment);
+}
+
+static inline void aligned_free(void* p)
+{
+  return std::free(p);
+}
+#endif
+
 }
