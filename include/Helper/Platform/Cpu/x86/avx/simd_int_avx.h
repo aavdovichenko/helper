@@ -7,6 +7,10 @@
 #include "../sse/simd_int_sse.h"
 #include "../simd_x86.h"
 
+#if defined(__GNUC__) && __GNUC__ < 8
+#define _mm256_setr_m128i(lo, hi) (_mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 1))
+#endif
+
 namespace Platform
 {
 
