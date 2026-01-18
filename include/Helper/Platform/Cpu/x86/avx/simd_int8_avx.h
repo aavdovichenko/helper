@@ -16,12 +16,23 @@ struct AvxSimdIntType<int8_t> : public BaseAvxSimdIntType<int8_t, AvxSimdIntType
   using BaseAvxSimdIntType<int8_t, AvxSimdIntType<int8_t>>::BaseAvxSimdIntType;
 
   static AvxSimdIntType<int8_t> populate(int8_t value);
+  static inline AvxSimdIntType<int8_t> create(int8_t v0, int8_t v1, int8_t v2, int8_t v3, int8_t v4, int8_t v5, int8_t v6, int8_t v7,
+    int8_t v8, int8_t v9, int8_t v10, int8_t v11, int8_t v12, int8_t v13, int8_t v14, int8_t v15,
+    int8_t v16, int8_t v17, int8_t v18, int8_t v19, int8_t v20, int8_t v21, int8_t v22, int8_t v23, 
+    int8_t v24, int8_t v25, int8_t v26, int8_t v27, int8_t v28, int8_t v29, int8_t v30, int8_t v31);
+
+  template<uint8_t countLo, int8_t lo, int8_t hi>
+  static AvxSimdIntType<int8_t> createWith2Runs();
 
   AvxSimdIntType<int8_t> operator+(AvxSimdIntType<int8_t> other) const;
   AvxSimdIntType<int8_t> operator-(AvxSimdIntType<int8_t> other) const;
   AvxSimdIntType<int8_t>& operator+=(AvxSimdIntType<int8_t> other);
 
+  AvxSimdIntType<int8_t> operator<<(int count) const;
+
   AvxSimdIntConditionType<int8_t> operator==(const AvxSimdIntType<int8_t>& other) const;
+  AvxSimdIntConditionType<int8_t> operator<(const AvxSimdIntType<int8_t>& other) const;
+  AvxSimdIntConditionType<int8_t> operator>(const AvxSimdIntType<int8_t>& other) const;
 };
 
 template<>
@@ -29,16 +40,45 @@ struct SIMD<int8_t, 32> : public AvxIntSimd<int8_t>
 {
   static AvxSimdIntType<int8_t> populate(int8_t value);
 
+  template<uint8_t count, int8_t padding = 0>
+  static Type shiftItemsLeft(Type value);
+  template<uint8_t count>
+  static Type shiftItemsLeft(Type value, Type carry);
+
   template<bool dstAligned, bool srcAligned>
   static inline void transpose(int8_t* dst, size_t dstStride, const int8_t* src, size_t srcStride);
 
   template<int dstStride = 1>
   static inline void transpose4x8x8(Type* dst, Type w0, Type w1, Type w2, Type w3, Type w4, Type w5, Type w6, Type w7);
+
+  static Type create4BitLookupTable(int8_t v0, int8_t v1, int8_t v2, int8_t v3, int8_t v4, int8_t v5, int8_t v6, int8_t v7,
+    int8_t v8, int8_t v9, int8_t v10, int8_t v11, int8_t v12, int8_t v13, int8_t v14, int8_t v15);
+  static Type lookup4BitKeyValues(Type keys, Type table);
 };
+
+// AvxSimdIntType<int8_t>
 
 inline AvxSimdIntType<int8_t> AvxSimdIntType<int8_t>::populate(int8_t value)
 {
   return AvxSimdIntType<int8_t>{_mm256_set1_epi8(value)};
+}
+
+inline AvxSimdIntType<int8_t> AvxSimdIntType<int8_t>::create(int8_t v0, int8_t v1, int8_t v2, int8_t v3, int8_t v4, int8_t v5, int8_t v6, int8_t v7,
+  int8_t v8, int8_t v9, int8_t v10, int8_t v11, int8_t v12, int8_t v13, int8_t v14, int8_t v15,
+  int8_t v16, int8_t v17, int8_t v18, int8_t v19, int8_t v20, int8_t v21, int8_t v22, int8_t v23,
+  int8_t v24, int8_t v25, int8_t v26, int8_t v27, int8_t v28, int8_t v29, int8_t v30, int8_t v31)
+{
+  return AvxSimdIntType<int8_t>{_mm256_setr_epi8(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31)};
+}
+
+template<uint8_t n, int8_t l, int8_t r>
+inline AvxSimdIntType<int8_t> AvxSimdIntType<int8_t>::createWith2Runs()
+{
+  static_assert(n > 0 && n < 32, "invalid value");
+  return _mm256_setr_epi8(0 < n ? l : r, 1 < n ? l : r, 2 < n ? l : r, 3 < n ? l : r, 4 < n ? l : r, 5 < n ? l : r, 6 < n ? l : r, 7 < n ? l : r,
+    8 < n ? l : r, 9 < n ? l : r, 10 < n ? l : r, 11 < n ? l : r, 12 < n ? l : r, 13 < n ? l : r, 14 < n ? l : r, 15 < n ? l : r,
+    16 < n ? l : r, 17 < n ? l : r, 18 < n ? l : r, 19 < n ? l : r, 20 < n ? l : r, 21 < n ? l : r, 22 < n ? l : r, 23 < n ? l : r,
+    24 < n ? l : r, 25 < n ? l : r, 26 < n ? l : r, 27 < n ? l : r, 28 < n ? l : r, 29 < n ? l : r, 30 < n ? l : r, 31 < n ? l : r);
 }
 
 inline AvxSimdIntType<int8_t> AvxSimdIntType<int8_t>::operator+(AvxSimdIntType<int8_t> other) const
@@ -57,14 +97,55 @@ inline AvxSimdIntType<int8_t>& AvxSimdIntType<int8_t>::operator+=(AvxSimdIntType
   return *this;
 }
 
+inline AvxSimdIntType<int8_t> AvxSimdIntType<int8_t>::operator<<(int count) const
+{
+  return AvxSimdIntType<int8_t>::fromNativeType(_mm256_and_si256(_mm256_slli_epi16(value, count), _mm256_set1_epi8((uint8_t)0xff << count)));
+}
+
 inline AvxSimdIntConditionType<int8_t> AvxSimdIntType<int8_t>::operator==(const AvxSimdIntType<int8_t>& other) const
 {
   return AvxSimdIntConditionType<int8_t>::fromNativeType(_mm256_cmpeq_epi8(value, other.value));
 }
 
+inline AvxSimdIntConditionType<int8_t> AvxSimdIntType<int8_t>::operator<(const AvxSimdIntType<int8_t>& other) const
+{
+  return AvxSimdIntConditionType<int8_t>::fromNativeType(_mm256_cmpgt_epi8(other.value, value));
+}
+
+inline AvxSimdIntConditionType<int8_t> AvxSimdIntType<int8_t>::operator>(const AvxSimdIntType<int8_t>& other) const
+{
+  return AvxSimdIntConditionType<int8_t>::fromNativeType(_mm256_cmpgt_epi8(value, other.value));
+}
+
+// SIMD<int8_t, 32>
+
 inline AvxSimdIntType<int8_t> SIMD<int8_t, 32>::populate(int8_t value)
 {
   return AvxSimdIntType<int8_t>{_mm256_set1_epi8(value)};
+}
+
+template<uint8_t count, int8_t padding>
+inline typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::shiftItemsLeft(Type value)
+{
+  static_assert(count < 16, "not implemented");
+  __m256i mask = Type::createWith2Runs<count, -1, 0>().value;
+  __m256i carry = _mm256_and_si256(_mm256_srli_si256(value.value, 16 - count), mask);
+  __m256i shifted = _mm256_or_si256(_mm256_slli_si256(value.value, count), _mm256_permute4x64_epi64(carry, _MM_SHUFFLE(1, 0, 2, 2)));
+  if (padding == 0)
+    return shifted;
+  if (count == 1)
+    return _mm256_or_si256(shifted, padding == -1 ? mask : _mm256_set1_epi8(padding));
+
+  return _mm256_or_si256(shifted, Type::createWith2Runs<count, padding, 0>().value);
+}
+
+template<uint8_t count>
+inline typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::shiftItemsLeft(Type value, Type carry)
+{
+  static_assert(count < 16, "not implemented");
+  __m256i mask = Type::createWith2Runs<32 - count, 0, -1>().value;
+  __m256i c = _mm256_srli_si256(_mm256_and_si256(carry.value, mask), 16 - count);
+  return _mm256_or_si256(shiftItemsLeft<count>(value).value, _mm256_permute4x64_epi64(c, _MM_SHUFFLE(0, 0, 3, 2)));
 }
 
 template<bool dstAligned, bool srcAligned>
@@ -155,6 +236,16 @@ inline void SIMD<int8_t, 32>::transpose4x8x8(Type* dst, Type w0, Type w1, Type w
   dst[5 * dstStride].value = _mm256_castpd_si256(_mm256_shuffle_pd(_mm256_castsi256_pd(tmp2), _mm256_castsi256_pd(tmp6), 0xf)); // 05 15 25 35 45 55 65 75 | 0D 1D 2D 3D 4D 5D 6D 7D
   dst[6 * dstStride].value = _mm256_castpd_si256(_mm256_shuffle_pd(_mm256_castsi256_pd(tmp3), _mm256_castsi256_pd(tmp7), 0x0)); // 06 16 26 36 46 56 66 76 | 0E 1E 2E 3E 4E 5E 6E 7E
   dst[7 * dstStride].value = _mm256_castpd_si256(_mm256_shuffle_pd(_mm256_castsi256_pd(tmp3), _mm256_castsi256_pd(tmp7), 0xf)); // 07 17 27 37 47 57 67 77 | 0F 1F 2F 3F 4F 5F 6F 7F
+}
+
+inline typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::create4BitLookupTable(int8_t v0, int8_t v1, int8_t v2, int8_t v3, int8_t v4, int8_t v5, int8_t v6, int8_t v7, int8_t v8, int8_t v9, int8_t v10, int8_t v11, int8_t v12, int8_t v13, int8_t v14, int8_t v15)
+{
+  return _mm256_setr_epi8(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
+}
+
+inline typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::lookup4BitKeyValues(Type keys, Type table)
+{
+  return _mm256_shuffle_epi8(table, keys);
 }
 
 }

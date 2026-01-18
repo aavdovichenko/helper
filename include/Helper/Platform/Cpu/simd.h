@@ -62,7 +62,13 @@ struct GenericExtendedIntegerType<uint32_t>
 template <typename T, int width>
 struct SIMD : public GenericSimd
 {
-  typedef uint64_t ConditionType;
+  struct ConditionType
+  {
+    bool flags[width];
+
+    inline bool allTrue() const;
+  };
+
   struct Type
   {
     T values[width];
@@ -131,6 +137,11 @@ struct SIMD : public GenericSimd
   static inline void store(T* dst, const Type& value);
   static inline void storeUnaligned(T* dst, const Type& value);
 
+  template<uint8_t count, int8_t padding = 0>
+  static Type shiftItemsLeft(Type value);
+  template<uint8_t count>
+  static Type shiftItemsLeft(Type value, Type carry);
+
   template<bool aligned, int dstStride = 1, int srcStride = 1>
   static inline void transpose(Type* dst, const T* src);
 
@@ -169,6 +180,7 @@ struct SIMD<T, 1> : public GenericSimd
 
   static inline Type min(Type a, Type b);
   static inline Type max(Type a, Type b);
+  static inline Type mask(ConditionType condition);
   // per component selection by per component condition
   static inline Type select(ConditionType condition, Type a, Type b);
 
@@ -238,6 +250,34 @@ inline typename SIMD<T, width>::Type SIMD<T, width>::create(Args... args)
   Type result;
 
   setValuesFromIndex<0>(result, args...);
+
+  return result;
+}
+
+template<typename T, int width>
+template<uint8_t count, int8_t padding>
+inline typename SIMD<T, width>::Type SIMD<T, width>::shiftItemsLeft(Type value)
+{
+  Type result;
+
+  for (int i = 0; i < count; i++)
+    result.values[i] = 0;
+  for (int i = count; i < width; i++)
+    result.values[i] = value.values[i - count];
+
+  return result;
+}
+
+template<typename T, int width>
+template<uint8_t count>
+inline typename SIMD<T, width>::Type SIMD<T, width>::shiftItemsLeft(Type value, Type carry)
+{
+  Type result;
+
+  for (int i = 0; i < count; i++)
+    result.values[i] = carry.values[width - count + i];
+  for (int i = count; i < width; i++)
+    result.values[i] = value.values[i - count];
 
   return result;
 }
@@ -431,6 +471,17 @@ inline T SIMD<T, width>::reductionSum(const Type& value)
 }
 
 template<typename T, int width>
+inline bool SIMD<T, width>::ConditionType::allTrue() const
+{
+  for(int i = 0; i < width; i++)
+  {
+    if (!flags[i])
+      return false;
+  }
+  return true;;
+}
+
+template<typename T, int width>
 inline SIMD<T, width>::Type::Type(const typename SIMD<typename std::make_signed<T>::type, width>::Type& other)
 {
   for (int i = 0; i < width; i++)
@@ -589,11 +640,10 @@ inline typename SIMD<T, width>::Type SIMD<T, width>::Type::operator&(const Type&
 template<typename T, int width>
 inline typename SIMD<T, width>::ConditionType SIMD<T, width>::Type::operator<(const Type& other) const
 {
-  static_assert(width <= 64, "not implemented");
-  ConditionType result = 0;
+  ConditionType result;
 
   for (int i = 0; i < width; i++)
-    result |= (values[i] < other.values[i] ? 1ull : 0ull) << i;
+    result.flags[i] = values[i] < other.values[i];
 
   return result;
 }
@@ -601,11 +651,10 @@ inline typename SIMD<T, width>::ConditionType SIMD<T, width>::Type::operator<(co
 template<typename T, int width>
 inline typename SIMD<T, width>::ConditionType SIMD<T, width>::Type::operator<=(const Type& other) const
 {
-  static_assert(width <= 64, "not implemented");
-  ConditionType result = 0;
+  ConditionType result;
 
   for (int i = 0; i < width; i++)
-    result |= (values[i] <= other.values[i] ? 1ull : 0ull) << i;
+    result.flags[i] = values[i] <= other.values[i];
 
   return result;
 }
@@ -613,11 +662,10 @@ inline typename SIMD<T, width>::ConditionType SIMD<T, width>::Type::operator<=(c
 template<typename T, int width>
 inline typename SIMD<T, width>::ConditionType SIMD<T, width>::Type::operator>(const Type& other) const
 {
-  static_assert(width <= 64, "not implemented");
-  ConditionType result = 0;
+  ConditionType result;
 
   for (int i = 0; i < width; i++)
-    result |= (values[i] > other.values[i] ? 1ull : 0ull) << i;
+    result.flags[i] = values[i] > other.values[i];
 
   return result;
 }
@@ -625,11 +673,10 @@ inline typename SIMD<T, width>::ConditionType SIMD<T, width>::Type::operator>(co
 template<typename T, int width>
 inline typename SIMD<T, width>::ConditionType SIMD<T, width>::Type::operator>=(const Type& other) const
 {
-  static_assert(width <= 64, "not implemented");
-  ConditionType result = 0;
+  ConditionType result;
 
   for (int i = 0; i < width; i++)
-    result |= (values[i] > other.values[i] ? 1ull : 0ull) << i;
+    result.flags[i] = values[i] > other.values[i];
 
   return result;
 }
@@ -696,6 +743,12 @@ template<typename T>
 inline typename SIMD<T, 1>::Type SIMD<T, 1>::max(Type a, Type b)
 {
   return a > b ? a : b;
+}
+
+template<typename T>
+inline typename SIMD<T, 1>::Type SIMD<T, 1>::mask(ConditionType condition)
+{
+  return condition ? ~(T)0 : 0;
 }
 
 template<typename T>

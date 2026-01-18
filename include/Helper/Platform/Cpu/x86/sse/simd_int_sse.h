@@ -30,6 +30,10 @@ struct SseSimdIntConditionType : public SimdConditionType<T, __m128i, SseSimdInt
 
   inline SseSimdIntType<T> mask() const;
   inline int64_t bitMask() const;
+  inline bool allFalse() const;
+  inline bool allTrue() const;
+
+  inline SseSimdIntType<T> select(const SseSimdIntType<T>& a, const SseSimdIntType<T>& b) const;
 };
 
 template <typename T, typename Implementation>
@@ -46,6 +50,8 @@ struct BaseSseSimdIntType : public SimdIntType<T, __m128i, Implementation>
   static inline void store(T* dst, const Implementation& value);
   inline void store(T* dst) const;
 
+  inline Implementation operator~() const;
+  inline Implementation operator&(const Implementation& other) const;
   inline Implementation operator|(const Implementation& other) const;
   inline Implementation& operator|=(const Implementation& other);
   inline Implementation andNot(const Implementation& other) const;
@@ -75,6 +81,7 @@ struct SseIntSimd : public x86Simd<16>, public IntSimd<T, __m128i, __m128i>
   template<bool aligned> static inline void store(T* dst, ParamType value);
   static inline void store(T* dst, ParamType value);
 
+  static inline Type mask(ConditionType condition);
   static inline Type select(ConditionType condition, Type a, Type b);
 };
 
@@ -94,6 +101,24 @@ template<typename T>
 inline int64_t SseSimdIntConditionType<T>::bitMask() const
 {
   return _mm_movemask_epi8(this->value);
+}
+
+template<typename T>
+inline bool SseSimdIntConditionType<T>::allFalse() const
+{
+  return _mm_movemask_epi8(this->value) == 0;
+}
+
+template<typename T>
+inline bool SseSimdIntConditionType<T>::allTrue() const
+{
+  return _mm_movemask_epi8(this->value) == 0xffff;
+}
+
+template<typename T>
+inline SseSimdIntType<T> SseSimdIntConditionType<T>::select(const SseSimdIntType<T>& a, const SseSimdIntType<T>& b) const
+{
+  return SseSimdIntType<T>::fromNativeType(_mm_or_si128(_mm_and_si128(this->value, a), _mm_andnot_si128(this->value, b)));
 }
 
 template<typename T, typename Implementation> template<bool aligned>
@@ -130,6 +155,18 @@ template<typename T, typename Implementation>
 inline void BaseSseSimdIntType<T, Implementation>::store(T* dst) const
 {
   _mm_store_si128((__m128i*)dst, this->value);
+}
+
+template<typename T, typename Implementation>
+inline Implementation BaseSseSimdIntType<T, Implementation>::operator~() const
+{
+  return Implementation::fromNativeType(_mm_xor_si128(this->value, _mm_set1_epi8((char)0xff)));
+}
+
+template<typename T, typename Implementation>
+inline Implementation BaseSseSimdIntType<T, Implementation>::operator&(const Implementation& other) const
+{
+  return Implementation::fromNativeType(_mm_and_si128(this->value, other.value));
 }
 
 template<typename T, typename Implementation>
@@ -201,6 +238,12 @@ template<typename T>
 inline void SseIntSimd<T>::store(T* dst, ParamType value)
 {
   _mm_store_si128((__m128i*)dst, value.value);
+}
+
+template<typename T>
+inline typename SseIntSimd<T>::Type SseIntSimd<T>::mask(ConditionType condition)
+{
+  return condition.value;
 }
 
 template<typename T>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "simd_int_avx.h"
+#include "simd_int8_avx.h"
 #include "../sse/simd_int8_sse.h"
 #include "../sse/simd_uint8_sse.h"
 
@@ -31,6 +32,7 @@ struct AvxSimdIntType<int16_t> : public BaseAvxSimdIntType<int16_t, AvxSimdIntTy
   AvxSimdIntConditionType<int16_t> operator==(const AvxSimdIntType<int16_t>& other) const;
   AvxSimdIntConditionType<int16_t> operator!=(const AvxSimdIntType<int16_t>& other) const;
   AvxSimdIntConditionType<int16_t> operator<(const AvxSimdIntType<int16_t>& other) const;
+  AvxSimdIntConditionType<int16_t> operator>(const AvxSimdIntType<int16_t>& other) const;
 
   static inline AvxSimdIntType<int16_t> fromPackedInt8(SIMD<int8_t, 16>::ParamType packed);
   static inline AvxSimdIntType<int16_t> fromPackedUint8(SIMD<uint8_t, 16>::ParamType packed);
@@ -111,6 +113,8 @@ struct SIMD<int16_t, 16> : public AvxIntSimd<int16_t>
   static inline void transpose2x8x8(Type* dst, ParamType w0, ParamType w1, ParamType w2, ParamType w3, ParamType w4, ParamType w5, ParamType w6, ParamType w7);
   template<bool aligned, int dstStride = 1, int srcStride = 1>
   static inline void transpose2x8x8(Type* dst, const int16_t* src);
+
+  static inline void create4BitKeyInt8LookupTable(ParamType w0, ParamType w1, AvxSimdIntType<int8_t>& t0, AvxSimdIntType<int8_t>& t1);
 };
 
 inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::populate(int16_t value)
@@ -162,6 +166,11 @@ inline AvxSimdIntConditionType<int16_t> AvxSimdIntType<int16_t>::operator!=(cons
 inline AvxSimdIntConditionType<int16_t> AvxSimdIntType<int16_t>::operator<(const AvxSimdIntType<int16_t>& other) const
 {
   return AvxSimdIntConditionType<int16_t>::fromNativeType(_mm256_cmpgt_epi16(other.value, value));
+}
+
+inline AvxSimdIntConditionType<int16_t> AvxSimdIntType<int16_t>::operator>(const AvxSimdIntType<int16_t>& other) const
+{
+  return AvxSimdIntConditionType<int16_t>::fromNativeType(_mm256_cmpgt_epi16(value, other.value));
 }
 
 inline AvxSimdIntType<int16_t> AvxSimdIntType<int16_t>::fromPackedInt8(SIMD<int8_t, 16>::ParamType packed)
@@ -383,6 +392,13 @@ inline typename SIMD<int16_t, 16>::Type SIMD<int16_t, 16>::interleaveEach4High(T
 inline void SIMD<int16_t, 16>::transpose(Type& w0, Type& w1, Type& w2, Type& w3, Type& w4, Type& w5, Type& w6, Type& w7, Type& w8, Type& w9, Type& wA, Type& wB, Type& wC, Type& wD, Type& wE, Type& wF)
 {
   transposeAvxInt16(w0.value, w1.value, w2.value, w3.value, w4.value, w5.value, w6.value, w7.value, w8.value, w9.value, wA.value, wB.value, wC.value, wD.value, wE.value, wF.value);
+}
+
+inline void SIMD<int16_t, 16>::create4BitKeyInt8LookupTable(ParamType w0, ParamType w1, AvxSimdIntType<int8_t>& t0, AvxSimdIntType<int8_t>& t1)
+{
+  __m256i packed = _mm256_packs_epi16(w0, w1);
+  t0 = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(2, 0, 2, 0));
+  t1 = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 3, 1));
 }
 
 template<bool dstAligned, bool srcAligned>

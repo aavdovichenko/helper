@@ -22,6 +22,9 @@ struct SseSimdIntType<int64_t> : public BaseSseSimdIntType<int64_t, SseSimdIntTy
   template <int i>
   int64_t get() const;
 
+  SseSimdIntType<int64_t> operator>>(int count) const;
+  SseSimdIntType<int64_t> operator<<(int count) const;
+
   template <int i0, int i1>
   inline SseSimdIntType<int64_t> shuffled() const;
   template <int i0, int i1>
@@ -48,6 +51,16 @@ inline int64_t SseSimdIntType<int64_t>::get() const
 #else
   return (((int64_t)_mm_extract_epi32(value, i * 2 + 1) << 32) | _mm_extract_epi32(value, i * 2));
 #endif
+}
+
+inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::operator>>(int count) const
+{
+  return SseSimdIntType<int64_t>::fromNativeType(_mm_srai_epi64(value, count));
+}
+
+inline SseSimdIntType<int64_t> SseSimdIntType<int64_t>::operator<<(int count) const
+{
+  return SseSimdIntType<int64_t>::fromNativeType(_mm_slli_epi64(value, count));
 }
 
 template<int i0, int i1>

@@ -30,6 +30,10 @@ struct AvxSimdIntConditionType : public SimdConditionType<T, __m256i, AvxSimdInt
 
   inline AvxSimdIntType<T> mask() const;
   inline int64_t bitMask() const;
+  inline bool allFalse() const;
+  inline bool allTrue() const;
+
+  inline AvxSimdIntType<T> select(const AvxSimdIntType<T>& a, const AvxSimdIntType<T>& b) const;
 };
 
 template <typename T, typename Implementation>
@@ -50,6 +54,7 @@ struct BaseAvxSimdIntType : public SimdIntType<T, __m256i, Implementation>
   inline SseSimdIntType<T> lowPart() const;
   inline SseSimdIntType<T> highPart() const;
 
+  inline Implementation operator~() const;
   inline Implementation operator&(const Implementation& other) const;
   inline Implementation operator|(const Implementation& other) const;
   inline Implementation& operator|=(const Implementation& other);
@@ -83,6 +88,7 @@ struct AvxIntSimd : public x86Simd<32>, public IntSimd<T, __m256i, __m256i>
   static inline void storeLow(T* dst, ParamType value);
   static inline void storeHigh(T* dst, ParamType value);
 
+  static inline Type mask(ConditionType condition);
   static inline Type select(ConditionType condition, Type a, Type b);
 
   constexpr static int PreferedAlignment = 32;
@@ -101,7 +107,26 @@ inline AvxSimdIntType<T> AvxSimdIntConditionType<T>::mask() const
 template<typename T>
 inline int64_t AvxSimdIntConditionType<T>::bitMask() const
 {
-  return _mm256_movemask_epi8(this->value);
+  static_assert(sizeof(T) == 1, "not supported");
+  return (uint32_t)_mm256_movemask_epi8(this->value);
+}
+
+template<typename T>
+inline bool AvxSimdIntConditionType<T>::allFalse() const
+{
+  return _mm256_movemask_epi8(this->value) == 0;
+}
+
+template<typename T>
+inline bool AvxSimdIntConditionType<T>::allTrue() const
+{
+  return _mm256_movemask_epi8(this->value) == 0xffffffff;
+}
+
+template<typename T>
+inline AvxSimdIntType<T> AvxSimdIntConditionType<T>::select(const AvxSimdIntType<T>& a, const AvxSimdIntType<T>& b) const
+{
+  return AvxSimdIntType<T>::fromNativeType(_mm256_or_si256(_mm256_and_si256(this->value, a), _mm256_andnot_si256(this->value, b)));
 }
 
 template<typename T, typename Implementation> template<bool aligned>
@@ -150,6 +175,12 @@ template<typename T, typename Implementation>
 inline SseSimdIntType<T> BaseAvxSimdIntType<T, Implementation>::highPart() const
 {
   return SseSimdIntType<T>{_mm256_extractf128_si256(*this, 1)};
+}
+
+template<typename T, typename Implementation>
+inline Implementation BaseAvxSimdIntType<T, Implementation>::operator~() const
+{
+  return Implementation::fromNativeType(_mm256_castps_si256(_mm256_xor_ps(_mm256_castsi256_ps(this->value), _mm256_castsi256_ps(_mm256_set1_epi8((char)0xff)))));
 }
 
 template<typename T, typename Implementation>
@@ -242,6 +273,12 @@ template<typename T>
 inline void AvxIntSimd<T>::storeHigh(T* dst, ParamType value)
 {
   _mm_store_si128((__m128i*)dst, _mm256_extractf128_si256(value.value, 1));
+}
+
+template<typename T>
+inline typename AvxIntSimd<T>::Type AvxIntSimd<T>::mask(ConditionType condition)
+{
+  return condition.value;
 }
 
 template<typename T>

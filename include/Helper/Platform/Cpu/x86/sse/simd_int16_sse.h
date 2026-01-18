@@ -1,6 +1,8 @@
 #pragma once
 
 #include "simd_int_sse.h"
+#include "simd_int8_sse.h"
+#include "simd_uint8_sse.h"
 
 #define PLATFORM_CPU_FEATURE_INT16x8
 
@@ -27,6 +29,7 @@ struct SseSimdIntType<int16_t> : public BaseSseSimdIntType<int16_t, SseSimdIntTy
 
   SseIntSimd<int16_t>::ConditionType operator==(const SseSimdIntType<int16_t>& other) const;
   SseIntSimd<int16_t>::ConditionType operator<(const SseSimdIntType<int16_t>& other) const;
+  SseIntSimd<int16_t>::ConditionType operator>(const SseSimdIntType<int16_t>& other) const;
 
   template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7>
   inline SseSimdIntType<int16_t>& shuffle();
@@ -42,10 +45,13 @@ struct SseSimdIntType<int16_t> : public BaseSseSimdIntType<int16_t, SseSimdIntTy
 
   template<bool aligned> static inline SseSimdIntType<int16_t> loadAndConvert(const int8_t* p);
   template<bool aligned> static inline SseSimdIntType<int16_t> loadAndConvert(const uint8_t* p);
+#endif
+  static inline SseSimdIntType<int8_t> toPackedInt8(SseSimdIntType<int16_t> low, SseSimdIntType<int16_t> high);
+  static inline SseSimdIntType<uint8_t> toPackedUint8(SseSimdIntType<int16_t> low, SseSimdIntType<int16_t> high);
 
   template<bool aligned> inline void convertAndStore(int8_t* p) const;
   template<bool aligned> inline void convertAndStore(uint8_t* p) const;
-#endif
+
   inline SseSimdIntType<int16_t> onesComplement() const;
 };
 
@@ -111,6 +117,8 @@ struct SIMD<int16_t, 8> : public SseIntSimd<int16_t>
   template<bool dstAligned, bool srcAligned>
   static inline void transpose(int16_t* dst, size_t dstStride, const int16_t* src, size_t srcStride);
 
+  static inline SseSimdIntType<int8_t> create4BitKeyInt8LookupTable(ParamType w0, ParamType w1);
+
   static int64_t conditionBitMask(ConditionParamType c0, ConditionParamType c1);
 };
 
@@ -162,6 +170,11 @@ inline SseIntSimd<int16_t>::ConditionType SseSimdIntType<int16_t>::operator<(con
   return SseIntSimd<int16_t>::ConditionType{_mm_cmplt_epi16(value, other.value)};
 }
 
+inline SseIntSimd<int16_t>::ConditionType SseSimdIntType<int16_t>::operator>(const SseSimdIntType<int16_t>& other) const
+{
+  return SseIntSimd<int16_t>::ConditionType{_mm_cmpgt_epi16(value, other.value)};
+}
+
 #ifdef PLATFORM_CPU_FEATURE_SSE41
 inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::fromPackedUint8(uint64_t packed)
 {
@@ -184,6 +197,17 @@ inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::loadAndConvert(const uin
 {
   return _mm_cvtepu8_epi16(_mm_set1_epi64x(*(const int64_t*)p));
 }
+#endif
+
+inline SseSimdIntType<int8_t> SseSimdIntType<int16_t>::toPackedInt8(SseSimdIntType<int16_t> low, SseSimdIntType<int16_t> high)
+{
+  return _mm_packs_epi16(low, high);
+}
+
+inline SseSimdIntType<uint8_t> SseSimdIntType<int16_t>::toPackedUint8(SseSimdIntType<int16_t> low, SseSimdIntType<int16_t> high)
+{
+  return _mm_packus_epi16(low, high);
+}
 
 template<bool aligned>
 inline void SseSimdIntType<int16_t>::convertAndStore(int8_t* p) const
@@ -196,7 +220,6 @@ inline void SseSimdIntType<int16_t>::convertAndStore(uint8_t* p) const
 {
   _mm_storeu_si64(p, _mm_packus_epi16(value, value));
 }
-#endif
 
 inline SseSimdIntType<int16_t> SseSimdIntType<int16_t>::onesComplement() const
 {
@@ -277,6 +300,11 @@ inline void SIMD<int16_t, 8>::convertAndStore(uint8_t* p, ParamType value)
 inline SIMD<int16_t, 8>::Type SIMD<int16_t, 8>::populate(int value)
 {
   return Type{_mm_set1_epi16(value)};
+}
+
+inline SseSimdIntType<int8_t> SIMD<int16_t, 8>::create4BitKeyInt8LookupTable(ParamType w0, ParamType w1)
+{
+  return _mm_packs_epi16(w0.value, w1.value);
 }
 
 inline int64_t SIMD<int16_t, 8>::conditionBitMask(ConditionParamType c0, ConditionParamType c1)
