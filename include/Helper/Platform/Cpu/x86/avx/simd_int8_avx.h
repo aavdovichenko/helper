@@ -133,8 +133,8 @@ inline typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::shiftItemsLeft(Type val
   __m256i shifted = _mm256_or_si256(_mm256_slli_si256(value.value, count), _mm256_permute4x64_epi64(carry, _MM_SHUFFLE(1, 0, 2, 2)));
   if (padding == 0)
     return shifted;
-  if (count == 1)
-    return _mm256_or_si256(shifted, padding == -1 ? mask : _mm256_set1_epi8(padding));
+  if (count == 1 && padding == -1)
+    return _mm256_or_si256(shifted, mask);
 
   return _mm256_or_si256(shifted, Type::createWith2Runs<count, padding, 0>().value);
 }

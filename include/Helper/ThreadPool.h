@@ -98,7 +98,7 @@ inline int ThreadPool::getThreadCount() const
   return m_threadCount;
 }
 
-void ThreadPool::setCommonThreadFunction(const CommonThreadFunction& f)
+inline void ThreadPool::setCommonThreadFunction(const CommonThreadFunction& f)
 {
   waitJobs();
   m_commonThreadFunction = f;

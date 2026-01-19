@@ -121,14 +121,8 @@ template<uint8_t count, int8_t padding>
 inline typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::shiftItemsLeft(Type value)
 {
   static_assert(count < 16, "invalid value");
-  __m128i mask = Type::createWith2Runs<count, -1, 0>().value;
   __m128i shifted = _mm_slli_si128(value.value, count);
-  if (padding == 0)
-    return shifted;
-  if (count == 1)
-    return _mm_or_si128(shifted, padding == -1 ? mask : _mm_set1_epi8(padding));
-
-  return _mm_or_si128(shifted, Type::createWith2Runs<count, padding, 0>().value);
+  return padding == 0 ? shifted : _mm_or_si128(shifted, Type::createWith2Runs<count, padding, 0>().value);
 }
 
 template<uint8_t count>
