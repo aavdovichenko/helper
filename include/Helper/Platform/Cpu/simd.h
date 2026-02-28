@@ -92,6 +92,8 @@ struct SIMD : public GenericSimd
     inline Type& operator+=(const Type& other);
     inline Type& operator*=(T factor);
 
+    inline Type operator~() const;
+    inline Type operator|(const Type& other) const;
     inline Type operator&(const Type& other) const;
 
     inline ConditionType operator<(const Type& other) const;
@@ -138,9 +140,9 @@ struct SIMD : public GenericSimd
   static inline void storeUnaligned(T* dst, const Type& value);
 
   template<uint8_t count, int8_t padding = 0>
-  static Type shiftItemsLeft(Type value);
+  static Type shiftItemsLeft(const Type& value);
   template<uint8_t count>
-  static Type shiftItemsLeft(Type value, Type carry);
+  static Type shiftItemsLeft(const Type& value, const Type& carry);
 
   template<bool aligned, int dstStride = 1, int srcStride = 1>
   static inline void transpose(Type* dst, const T* src);
@@ -256,7 +258,7 @@ inline typename SIMD<T, width>::Type SIMD<T, width>::create(Args... args)
 
 template<typename T, int width>
 template<uint8_t count, int8_t padding>
-inline typename SIMD<T, width>::Type SIMD<T, width>::shiftItemsLeft(Type value)
+inline typename SIMD<T, width>::Type SIMD<T, width>::shiftItemsLeft(const Type& value)
 {
   Type result;
 
@@ -270,7 +272,7 @@ inline typename SIMD<T, width>::Type SIMD<T, width>::shiftItemsLeft(Type value)
 
 template<typename T, int width>
 template<uint8_t count>
-inline typename SIMD<T, width>::Type SIMD<T, width>::shiftItemsLeft(Type value, Type carry)
+inline typename SIMD<T, width>::Type SIMD<T, width>::shiftItemsLeft(const Type& value, const Type& carry)
 {
   Type result;
 
@@ -624,6 +626,28 @@ inline typename SIMD<T, width>::Type& SIMD<T, width>::Type::operator*=(T factor)
     values[i] *= factor;
 
   return *this;
+}
+
+template<typename T, int width>
+inline typename SIMD<T, width>::Type SIMD<T, width>::Type::operator~() const
+{
+  Type result;
+
+  for (int i = 0; i < width; i++)
+    result.values[i] = ~values[i];
+
+  return result;
+}
+
+template<typename T, int width>
+inline typename SIMD<T, width>::Type SIMD<T, width>::Type::operator|(const Type& other) const
+{
+  Type result;
+
+  for (int i = 0; i < width; i++)
+    result.values[i] = values[i] | other.values[i];
+
+  return result;
 }
 
 template<typename T, int width>

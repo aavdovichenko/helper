@@ -42,6 +42,8 @@ struct AvxSimdIntType<int32_t> : public BaseAvxSimdIntType<int32_t, AvxSimdIntTy
   static inline AvxSimdIntType<int32_t> fromPackedUint16(const SseSimdIntType<uint16_t>& packed);
   static inline AvxSimdIntType<int32_t> fromPackedUint24(const AvxSimdIntType<int32_t>& packed);
   inline void setFromPackedUint8(uint64_t packed);
+  static inline void fromInt8Components(SIMD<int8_t, 32>::ParamType bits0_7, SIMD<int8_t, 32>::ParamType bits8_15, SIMD<int8_t, 32>::ParamType bits16_23,
+    AvxSimdIntType<int32_t>& w0_7, AvxSimdIntType<int32_t>& w8_15, AvxSimdIntType<int32_t>& w16_23, AvxSimdIntType<int32_t>& w24_31);
 
   inline AvxSimdIntType<int32_t> toPackedUint24() const;
 
@@ -212,6 +214,24 @@ inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::fromPackedUint24(const A
 inline void AvxSimdIntType<int32_t>::setFromPackedUint8(uint64_t packed)
 {
   value = _mm256_cvtepu8_epi32(_mm_set1_epi64x(packed));
+}
+
+inline void AvxSimdIntType<int32_t>::fromInt8Components(SIMD<int8_t, 32>::ParamType bits0_7, SIMD<int8_t, 32>::ParamType bits8_15, SIMD<int8_t, 32>::ParamType bits16_23,
+  AvxSimdIntType<int32_t>& w0_7, AvxSimdIntType<int32_t>& w8_15, AvxSimdIntType<int32_t>& w16_23, AvxSimdIntType<int32_t>& w24_31)
+{
+  __m256i s0 = _mm256_unpacklo_epi8(bits0_7, bits8_15);
+  __m256i s1 = _mm256_unpackhi_epi8(bits0_7, bits8_15);
+  __m256i s2 = _mm256_unpacklo_epi8(bits16_23, _mm256_setzero_si256());
+  __m256i s3 = _mm256_unpackhi_epi8(bits16_23, _mm256_setzero_si256());
+  __m256i w0 = _mm256_unpacklo_epi16(s0, s2);
+  __m256i w1 = _mm256_unpackhi_epi16(s0, s2);
+  __m256i w2 = _mm256_unpacklo_epi16(s1, s3);
+  __m256i w3 = _mm256_unpackhi_epi16(s1, s3);
+
+  w0_7.value = _mm256_permute2x128_si256(w0, w1, 0x20);
+  w8_15.value = _mm256_permute2x128_si256(w2, w3, 0x20);
+  w16_23.value = _mm256_permute2x128_si256(w0, w1, 0x31);
+  w24_31.value = _mm256_permute2x128_si256(w2, w3, 0x31);
 }
 
 inline AvxSimdIntType<int32_t> AvxSimdIntType<int32_t>::toPackedUint24() const

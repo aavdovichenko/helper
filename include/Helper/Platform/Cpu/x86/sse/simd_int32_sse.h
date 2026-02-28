@@ -3,6 +3,7 @@
 #include <immintrin.h> // for _mm_blend_epi32()
 
 #include "simd_int_sse.h"
+#include "simd_int8_sse.h"
 
 #include "../simd_x86.h"
 
@@ -50,6 +51,9 @@ struct SseSimdIntType<int32_t> : public BaseSseSimdIntType<int32_t, SseSimdIntTy
   static inline SseSimdIntType<int32_t> fromPackedUint16(uint64_t packed);
   static inline SseSimdIntType<int32_t> fromPackedUint24(const SseSimdIntType<int32_t>& packed);
   inline void setFromPackedUint8(uint32_t packed);
+
+  static inline void fromInt8Components(SIMD<int8_t, 16>::ParamType bits0_7, SIMD<int8_t, 16>::ParamType bits8_15, SIMD<int8_t, 16>::ParamType bits16_23,
+    SseSimdIntType<int32_t>& w0_7, SseSimdIntType<int32_t>& w8_15, SseSimdIntType<int32_t>& w16_23, SseSimdIntType<int32_t>& w24_31);
 
   inline SseSimdIntType<int32_t> toPackedUint24() const;
 
@@ -201,6 +205,19 @@ inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::fromPackedUint24(const S
 inline void SseSimdIntType<int32_t>::setFromPackedUint8(uint32_t packed)
 {
   value = _mm_cvtepu8_epi32(_mm_set1_epi32(packed));
+}
+
+inline void SseSimdIntType<int32_t>::fromInt8Components(SIMD<int8_t, 16>::ParamType bits0_7, SIMD<int8_t, 16>::ParamType bits8_15, SIMD<int8_t, 16>::ParamType bits16_23,
+  SseSimdIntType<int32_t>& w0_7, SseSimdIntType<int32_t>& w8_15, SseSimdIntType<int32_t>& w16_23, SseSimdIntType<int32_t>& w24_31)
+{
+  __m128i s0 = _mm_unpacklo_epi8(bits0_7, bits8_15);
+  __m128i s1 = _mm_unpackhi_epi8(bits0_7, bits8_15);
+  __m128i s2 = _mm_unpacklo_epi8(bits16_23, _mm_setzero_si128());
+  __m128i s3 = _mm_unpackhi_epi8(bits16_23, _mm_setzero_si128());
+  w0_7.value = _mm_unpacklo_epi16(s0, s2);
+  w8_15.value = _mm_unpackhi_epi16(s0, s2);
+  w16_23.value = _mm_unpacklo_epi16(s1, s3);
+  w24_31.value = _mm_unpackhi_epi16(s1, s3);
 }
 
 inline SseSimdIntType<int32_t> SseSimdIntType<int32_t>::toPackedUint24() const

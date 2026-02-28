@@ -52,6 +52,7 @@ struct BaseSseSimdIntType : public SimdIntType<T, __m128i, Implementation>
 
   inline Implementation operator~() const;
   inline Implementation operator&(const Implementation& other) const;
+  inline Implementation& operator&=(const Implementation& other);
   inline Implementation operator|(const Implementation& other) const;
   inline Implementation& operator|=(const Implementation& other);
   inline Implementation andNot(const Implementation& other) const;
@@ -167,6 +168,13 @@ template<typename T, typename Implementation>
 inline Implementation BaseSseSimdIntType<T, Implementation>::operator&(const Implementation& other) const
 {
   return Implementation::fromNativeType(_mm_and_si128(this->value, other.value));
+}
+
+template<typename T, typename Implementation>
+inline Implementation& BaseSseSimdIntType<T, Implementation>::operator&=(const Implementation& other)
+{
+  this->value = _mm_and_si128(this->value, other.value);
+  return *(Implementation*)this;
 }
 
 template<typename T, typename Implementation>

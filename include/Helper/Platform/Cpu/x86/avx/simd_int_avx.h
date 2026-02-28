@@ -56,6 +56,7 @@ struct BaseAvxSimdIntType : public SimdIntType<T, __m256i, Implementation>
 
   inline Implementation operator~() const;
   inline Implementation operator&(const Implementation& other) const;
+  inline Implementation& operator&=(const Implementation& other);
   inline Implementation operator|(const Implementation& other) const;
   inline Implementation& operator|=(const Implementation& other);
   inline Implementation operator^(const Implementation& other) const;
@@ -188,6 +189,13 @@ inline Implementation BaseAvxSimdIntType<T, Implementation>::operator&(const Imp
 {
 //  return Implementation::fromNativeType(_mm256_and_si256(this->value, other.value));
   return Implementation::fromNativeType(_mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(this->value), _mm256_castsi256_ps(other.value))));
+}
+
+template<typename T, typename Implementation>
+inline Implementation& BaseAvxSimdIntType<T, Implementation>::operator&=(const Implementation& other)
+{
+  this->value = _mm256_and_si256(this->value, other.value);
+  return *(Implementation*)this;
 }
 
 template<typename T, typename Implementation>

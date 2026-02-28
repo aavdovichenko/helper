@@ -214,7 +214,7 @@ inline typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::create4BitLookupTable(i
 
 inline typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::lookup4BitKeyValues(Type keys, Type table)
 {
-  return _mm_shuffle_epi8(table, keys);
+  return _mm_shuffle_epi8(table.value, keys.value);
 }
 
 }

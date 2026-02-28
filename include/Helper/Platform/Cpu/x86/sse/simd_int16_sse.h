@@ -48,6 +48,8 @@ struct SseSimdIntType<int16_t> : public BaseSseSimdIntType<int16_t, SseSimdIntTy
 #endif
   static inline SseSimdIntType<int8_t> toPackedInt8(SseSimdIntType<int16_t> low, SseSimdIntType<int16_t> high);
   static inline SseSimdIntType<uint8_t> toPackedUint8(SseSimdIntType<int16_t> low, SseSimdIntType<int16_t> high);
+  static inline void fromInt8Components(SIMD<int8_t, 16>::ParamType bits0_7, SIMD<int8_t, 16>::ParamType bits8_15,
+    SseSimdIntType<int16_t>& w0_7, SseSimdIntType<int16_t>& w8_15);
 
   template<bool aligned> inline void convertAndStore(int8_t* p) const;
   template<bool aligned> inline void convertAndStore(uint8_t* p) const;
@@ -207,6 +209,12 @@ inline SseSimdIntType<int8_t> SseSimdIntType<int16_t>::toPackedInt8(SseSimdIntTy
 inline SseSimdIntType<uint8_t> SseSimdIntType<int16_t>::toPackedUint8(SseSimdIntType<int16_t> low, SseSimdIntType<int16_t> high)
 {
   return _mm_packus_epi16(low, high);
+}
+
+inline void SseSimdIntType<int16_t>::fromInt8Components(SIMD<int8_t, 16>::ParamType bits0_7, SIMD<int8_t, 16>::ParamType bits8_15, SseSimdIntType<int16_t>& w0_7, SseSimdIntType<int16_t>& w8_15)
+{
+  w0_7.value = _mm_unpacklo_epi8(bits0_7, bits8_15);
+  w8_15.value = _mm_unpackhi_epi8(bits0_7, bits8_15);
 }
 
 template<bool aligned>
