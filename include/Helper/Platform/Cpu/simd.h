@@ -95,6 +95,7 @@ struct SIMD : public GenericSimd
     inline Type operator~() const;
     inline Type operator|(const Type& other) const;
     inline Type operator&(const Type& other) const;
+    inline Type& operator|=(const Type& other);
 
     inline ConditionType operator<(const Type& other) const;
     inline ConditionType operator<=(const Type& other) const;
@@ -659,6 +660,15 @@ inline typename SIMD<T, width>::Type SIMD<T, width>::Type::operator&(const Type&
     result.values[i] = values[i] & other.values[i];
 
   return result;
+}
+
+template<typename T, int width>
+inline typename SIMD<T, width>::Type& SIMD<T, width>::Type::operator|=(const Type& other)
+{
+  for (int i = 0; i < width; i++)
+    values[i] |= other.values[i];
+
+  return *this;
 }
 
 template<typename T, int width>
