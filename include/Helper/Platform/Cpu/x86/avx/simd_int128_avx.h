@@ -36,7 +36,10 @@ inline AvxSimdIntType<int128_t> AvxSimdIntType<int128_t>::shuffled() const
 }
 
 template<int i0, int i1>
-inline AvxSimdIntType<int128_t> AvxSimdIntType<int128_t>::shuffle(__m256i a)
+#ifdef PLATFORM_COMPILER_MSVC
+__forceinline // workaround for msvc inlining issue for that function
+#endif
+AvxSimdIntType<int128_t> AvxSimdIntType<int128_t>::shuffle(__m256i a)
 {
   static_assert(i0 >= 0 && i0 < 2, "invalid i0 value");
   static_assert(i1 >= 0 && i1 < 2, "invalid i1 value");

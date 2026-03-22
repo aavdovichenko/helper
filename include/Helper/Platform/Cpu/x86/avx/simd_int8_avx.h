@@ -40,6 +40,9 @@ struct SIMD<int8_t, 32> : public AvxIntSimd<int8_t>
 {
   static AvxSimdIntType<int8_t> populate(int8_t value);
 
+  static inline Type min(ParamType a, ParamType b);
+  static inline Type max(ParamType a, ParamType b);
+
   template<uint8_t count, int8_t padding = 0>
   static Type shiftItemsLeft(Type value);
   template<uint8_t count>
@@ -122,6 +125,16 @@ inline AvxSimdIntConditionType<int8_t> AvxSimdIntType<int8_t>::operator>(const A
 inline AvxSimdIntType<int8_t> SIMD<int8_t, 32>::populate(int8_t value)
 {
   return AvxSimdIntType<int8_t>{_mm256_set1_epi8(value)};
+}
+
+inline SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::min(ParamType a, ParamType b)
+{
+  return Type{_mm256_min_epi8(a, b)};
+}
+
+inline SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::max(ParamType a, ParamType b)
+{
+  return Type{_mm256_max_epi8(a, b)};
 }
 
 template<uint8_t count, int8_t padding>
@@ -243,7 +256,10 @@ inline typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::create4BitLookupTable(i
   return _mm256_setr_epi8(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
 }
 
-inline typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::lookup4BitKeyValues(Type keys, Type table)
+#ifdef PLATFORM_COMPILER_MSVC
+__forceinline // workaround for msvc inlining issue for that function
+#endif
+typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::lookup4BitKeyValues(Type keys, Type table)
 {
   return _mm256_shuffle_epi8(table, keys);
 }

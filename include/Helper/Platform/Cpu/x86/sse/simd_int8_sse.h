@@ -38,6 +38,9 @@ struct SIMD<int8_t, 16> : public SseIntSimd<int8_t>
 {
   static SseSimdIntType<int8_t> populate(int8_t value);
 
+  static inline Type min(ParamType a, ParamType b);
+  static inline Type max(ParamType a, ParamType b);
+
   template<uint8_t count, int8_t padding = 0>
   static Type shiftItemsLeft(Type value);
   template<uint8_t count>
@@ -115,6 +118,26 @@ inline SseSimdIntConditionType<int8_t> SseSimdIntType<int8_t>::operator>(const S
 inline SseSimdIntType<int8_t> SIMD<int8_t, 16>::populate(int8_t value)
 {
   return _mm_set1_epi8(value);
+}
+
+inline SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::min(ParamType a, ParamType b)
+{
+#ifdef PLATFORM_CPU_FEATURE_SSE41
+  return Type{_mm_min_epi8(a, b)};
+#else
+  __m128i cmp = _mm_cmplt_epi8(a, b);
+  return Type{_mm_add_epi8(_mm_and_si128(cmp, a), _mm_andnot_si128(cmp, b))};
+#endif
+}
+
+inline SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::max(ParamType a, ParamType b)
+{
+#ifdef PLATFORM_CPU_FEATURE_SSE41
+  return Type{_mm_max_epi8(a, b)};
+#else
+  __m128i cmp = _mm_cmpgt_epi8(a, b);
+  return Type{_mm_add_epi8(_mm_and_si128(cmp, a), _mm_andnot_si128(cmp, b))};
+#endif
 }
 
 template<uint8_t count, int8_t padding>

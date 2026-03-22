@@ -62,11 +62,14 @@ struct GenericExtendedIntegerType<uint32_t>
 template <typename T, int width>
 struct SIMD : public GenericSimd
 {
+  struct Type;
+
   struct ConditionType
   {
     bool flags[width];
 
     inline bool allTrue() const;
+    inline Type mask() const;
   };
 
   struct Type
@@ -96,6 +99,7 @@ struct SIMD : public GenericSimd
     inline Type operator|(const Type& other) const;
     inline Type operator&(const Type& other) const;
     inline Type& operator|=(const Type& other);
+    inline Type& operator&=(const Type& other);
 
     inline ConditionType operator<(const Type& other) const;
     inline ConditionType operator<=(const Type& other) const;
@@ -349,7 +353,7 @@ inline typename SIMD<T, width>::Type SIMD<T, width>::min(Type a, Type b)
   Type result;
 
   for (int i = 0; i < width; i++)
-    result.values[i] = qMin(a.values[i], b.values[i]);
+    result.values[i] = std::min(a.values[i], b.values[i]);
 
   return result;
 }
@@ -360,7 +364,7 @@ inline typename SIMD<T, width>::Type SIMD<T, width>::max(Type a, Type b)
   Type result;
 
   for (int i = 0; i < width; i++)
-    result.values[i] = qMax(a.values[i], b.values[i]);
+    result.values[i] = std::max(a.values[i], b.values[i]);
 
   return result;
 }
@@ -482,6 +486,16 @@ inline bool SIMD<T, width>::ConditionType::allTrue() const
       return false;
   }
   return true;;
+}
+
+template<typename T, int width>
+inline typename SIMD<T, width>::Type SIMD<T, width>::ConditionType::mask() const
+{
+  Type mask = {};
+
+  for (int i = 0; i < width; i++)
+    mask.values[i] = flags[i] ? (T)-1 : 0;
+  return mask;
 }
 
 template<typename T, int width>
@@ -667,6 +681,15 @@ inline typename SIMD<T, width>::Type& SIMD<T, width>::Type::operator|=(const Typ
 {
   for (int i = 0; i < width; i++)
     values[i] |= other.values[i];
+
+  return *this;
+}
+
+template<typename T, int width>
+inline typename SIMD<T, width>::Type& SIMD<T, width>::Type::operator&=(const Type& other)
+{
+  for (int i = 0; i < width; i++)
+    values[i] &= other.values[i];
 
   return *this;
 }

@@ -97,7 +97,7 @@ struct AvxIntSimd : public x86Simd<32>, public IntSimd<T, __m256i, __m256i>
 
 // implementation
 
-// AvxSimdIntType<T>
+// AvxSimdIntConditionType<T>
 
 template<typename T>
 inline AvxSimdIntType<T> AvxSimdIntConditionType<T>::mask() const
@@ -119,6 +119,9 @@ inline bool AvxSimdIntConditionType<T>::allFalse() const
 }
 
 template<typename T>
+#ifdef PLATFORM_COMPILER_MSVC
+__forceinline // workaround for msvc inlining issue for that function
+#endif
 inline bool AvxSimdIntConditionType<T>::allTrue() const
 {
   return _mm256_movemask_epi8(this->value) == 0xffffffff;
@@ -129,6 +132,8 @@ inline AvxSimdIntType<T> AvxSimdIntConditionType<T>::select(const AvxSimdIntType
 {
   return AvxSimdIntType<T>::fromNativeType(_mm256_or_si256(_mm256_and_si256(this->value, a), _mm256_andnot_si256(this->value, b)));
 }
+
+// BaseAvxSimdIntType<T>
 
 template<typename T, typename Implementation> template<bool aligned>
 inline Implementation BaseAvxSimdIntType<T, Implementation>::load(const T* src)

@@ -90,7 +90,7 @@ static inline void transposeSseInt16(__m128i& w0, __m128i& w1, __m128i& w2, __m1
 
 // implementation
 
-// SseSimdIntType<T>
+// SseSimdIntConditionType<T>
 
 template<typename T>
 inline SseSimdIntType<T> SseSimdIntConditionType<T>::mask() const
@@ -111,6 +111,9 @@ inline bool SseSimdIntConditionType<T>::allFalse() const
 }
 
 template<typename T>
+#ifdef PLATFORM_COMPILER_MSVC
+__forceinline // workaround for msvc inlining issue for that function
+#endif
 inline bool SseSimdIntConditionType<T>::allTrue() const
 {
   return _mm_movemask_epi8(this->value) == 0xffff;
@@ -121,6 +124,8 @@ inline SseSimdIntType<T> SseSimdIntConditionType<T>::select(const SseSimdIntType
 {
   return SseSimdIntType<T>::fromNativeType(_mm_or_si128(_mm_and_si128(this->value, a), _mm_andnot_si128(this->value, b)));
 }
+
+// BaseSseSimdIntType<T>
 
 template<typename T, typename Implementation> template<bool aligned>
 inline Implementation BaseSseSimdIntType<T, Implementation>::load(const T* src)
