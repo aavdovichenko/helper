@@ -251,7 +251,10 @@ inline void SIMD<int8_t, 32>::transpose4x8x8(Type* dst, Type w0, Type w1, Type w
   dst[7 * dstStride].value = _mm256_castpd_si256(_mm256_shuffle_pd(_mm256_castsi256_pd(tmp3), _mm256_castsi256_pd(tmp7), 0xf)); // 07 17 27 37 47 57 67 77 | 0F 1F 2F 3F 4F 5F 6F 7F
 }
 
-inline typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::create4BitLookupTable(int8_t v0, int8_t v1, int8_t v2, int8_t v3, int8_t v4, int8_t v5, int8_t v6, int8_t v7, int8_t v8, int8_t v9, int8_t v10, int8_t v11, int8_t v12, int8_t v13, int8_t v14, int8_t v15)
+#ifdef PLATFORM_COMPILER_MSVC
+__forceinline // workaround for msvc inlining issue for that function
+#endif
+typename SIMD<int8_t, 32>::Type SIMD<int8_t, 32>::create4BitLookupTable(int8_t v0, int8_t v1, int8_t v2, int8_t v3, int8_t v4, int8_t v5, int8_t v6, int8_t v7, int8_t v8, int8_t v9, int8_t v10, int8_t v11, int8_t v12, int8_t v13, int8_t v14, int8_t v15)
 {
   return _mm256_setr_epi8(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
 }

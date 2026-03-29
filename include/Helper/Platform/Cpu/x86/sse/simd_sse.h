@@ -12,6 +12,7 @@
 #include "simd_uint8_sse.h"
 #include "simd_uint16_sse.h"
 #include "simd_uint32_sse.h"
+#include "simd_uint64_sse.h"
 #include "simd_float_sse.h"
 
 // x86 SSE simd functions

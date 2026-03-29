@@ -141,7 +141,10 @@ inline SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::max(ParamType a, ParamType b)
 }
 
 template<uint8_t count, int8_t padding>
-inline typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::shiftItemsLeft(Type value)
+#ifdef PLATFORM_COMPILER_MSVC
+__forceinline // workaround for msvc inlining issue for that function
+#endif
+typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::shiftItemsLeft(Type value)
 {
   static_assert(count < 16, "invalid value");
   __m128i shifted = _mm_slli_si128(value.value, count);
@@ -149,7 +152,10 @@ inline typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::shiftItemsLeft(Type val
 }
 
 template<uint8_t count>
-inline typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::shiftItemsLeft(Type value, Type carry)
+#ifdef PLATFORM_COMPILER_MSVC
+__forceinline // workaround for msvc inlining issue for that function
+#endif
+typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::shiftItemsLeft(Type value, Type carry)
 {
   static_assert(count < 16, "invalid value");
   __m128i mask = Type::createWith2Runs<16 - count, 0, -1>().value;
@@ -230,12 +236,18 @@ inline void SIMD<int8_t, 16>::transpose2x8x8(Type* dst, Type w0, Type w1, Type w
   dst[7 * dstStride] = _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(tmp3), _mm_castsi128_pd(tmp7), 0x3)); // 07 17 27 37 47 57 67 77 | 0F 1F 2F 3F 4F 5F 6F 7F
 }
 
-inline typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::create4BitLookupTable(int8_t v0, int8_t v1, int8_t v2, int8_t v3, int8_t v4, int8_t v5, int8_t v6, int8_t v7, int8_t v8, int8_t v9, int8_t v10, int8_t v11, int8_t v12, int8_t v13, int8_t v14, int8_t v15)
+#ifdef PLATFORM_COMPILER_MSVC
+__forceinline // workaround for msvc inlining issue for that function
+#endif
+typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::create4BitLookupTable(int8_t v0, int8_t v1, int8_t v2, int8_t v3, int8_t v4, int8_t v5, int8_t v6, int8_t v7, int8_t v8, int8_t v9, int8_t v10, int8_t v11, int8_t v12, int8_t v13, int8_t v14, int8_t v15)
 {
   return _mm_setr_epi8(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
 }
 
-inline typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::lookup4BitKeyValues(Type keys, Type table)
+#ifdef PLATFORM_COMPILER_MSVC
+__forceinline // workaround for msvc inlining issue for that function
+#endif
+typename SIMD<int8_t, 16>::Type SIMD<int8_t, 16>::lookup4BitKeyValues(Type keys, Type table)
 {
   return _mm_shuffle_epi8(table.value, keys.value);
 }

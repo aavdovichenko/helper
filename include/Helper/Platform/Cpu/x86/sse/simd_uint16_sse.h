@@ -19,6 +19,9 @@ struct SseSimdIntType<uint16_t> : public BaseSseSimdIntType<uint16_t, SseSimdInt
 
   SseSimdIntType<uint16_t> operator+(const SseSimdIntType<uint16_t>& other) const;
   SseSimdIntType<uint16_t> operator-(const SseSimdIntType<uint16_t>& other) const;
+
+  SseSimdIntType<uint16_t> operator>>(int count) const;
+  SseSimdIntType<uint16_t> operator<<(int count) const;
 };
 
 template<>
@@ -45,6 +48,16 @@ inline SseSimdIntType<uint16_t> SseSimdIntType<uint16_t>::operator+(const SseSim
 inline SseSimdIntType<uint16_t> SseSimdIntType<uint16_t>::operator-(const SseSimdIntType<uint16_t>& other) const
 {
   return SseSimdIntType<uint16_t>{_mm_sub_epi16(value, other.value)};
+}
+
+inline SseSimdIntType<uint16_t> SseSimdIntType<uint16_t>::operator>>(int count) const
+{
+  return SseSimdIntType<uint16_t>{_mm_srli_epi16(value, count)};
+}
+
+inline SseSimdIntType<uint16_t> SseSimdIntType<uint16_t>::operator<<(int count) const
+{
+  return SseSimdIntType<uint16_t>{_mm_slli_epi16(value, count)};
 }
 
 // SIMD<uint16_t, 8>

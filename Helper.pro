@@ -64,6 +64,7 @@ contains(QMAKE_HOST.arch, x86_64) | contains(QMAKE_HOST.arch, x86) {
                include/Helper/Platform/Cpu/x86/sse/simd_uint8_sse.h \
                include/Helper/Platform/Cpu/x86/sse/simd_uint16_sse.h \
                include/Helper/Platform/Cpu/x86/sse/simd_uint32_sse.h \
+               include/Helper/Platform/Cpu/x86/sse/simd_uint64_sse.h \
                include/Helper/Platform/Cpu/x86/simd_x86.h \
                include/Helper/Platform/Cpu/x86/x86.h
 }

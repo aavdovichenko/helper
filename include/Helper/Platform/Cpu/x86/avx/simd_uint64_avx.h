@@ -18,6 +18,7 @@ struct AvxSimdIntType<uint64_t> : public BaseAvxSimdIntType<uint64_t, AvxSimdInt
   AvxSimdIntType<uint64_t> operator+(const AvxSimdIntType<uint64_t>& other) const;
 
   AvxSimdIntType<uint64_t> operator>>(int count) const;
+  AvxSimdIntType<uint64_t> operator<<(int count) const;
 };
 
 template<>
@@ -36,6 +37,11 @@ inline AvxSimdIntType<uint64_t> AvxSimdIntType<uint64_t>::operator+(const AvxSim
 inline AvxSimdIntType<uint64_t> AvxSimdIntType<uint64_t>::operator>>(int count) const
 {
   return AvxSimdIntType<uint64_t>::fromNativeType(_mm256_srli_epi64(value, count));
+}
+
+inline AvxSimdIntType<uint64_t> AvxSimdIntType<uint64_t>::operator<<(int count) const
+{
+  return AvxSimdIntType<uint64_t>::fromNativeType(_mm256_slli_epi64(value, count));
 }
 
 inline SIMD<uint64_t, 4>::Type SIMD<uint64_t, 4>::populate(uint64_t value)
